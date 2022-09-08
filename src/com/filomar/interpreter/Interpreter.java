@@ -1,7 +1,7 @@
 package com.filomar.interpreter;
 
 public class Interpreter implements Expr.Visitor<Object> {
-    private Object evaluate(Expr expr) {
+    public Object evaluate(Expr expr) {
         return expr.accept(this);
     }
 
@@ -24,7 +24,7 @@ public class Interpreter implements Expr.Visitor<Object> {
                 if (left instanceof String && right instanceof String)
                     return ((String) left).length() > ((String) right).length();
 
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected operands of type 'Double' or 'String'");
+                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
             }
             case GREATER_EQUAL -> {
                 if (left instanceof Double && right instanceof Double)
@@ -33,7 +33,7 @@ public class Interpreter implements Expr.Visitor<Object> {
                 if (left instanceof String && right instanceof String)
                     return ((String) left).length() >= ((String) right).length();
 
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected operands of type 'Double' or 'String'");
+                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
             }
             case LESS -> {
                 if (left instanceof Double && right instanceof Double)
@@ -42,7 +42,7 @@ public class Interpreter implements Expr.Visitor<Object> {
                 if (left instanceof String && right instanceof String)
                     return ((String) left).length() < ((String) right).length();
 
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected operands of type 'Double' or 'String'");
+                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
             }
             case LESS_EQUAL -> {
                 if (left instanceof Double && right instanceof Double)
@@ -51,10 +51,10 @@ public class Interpreter implements Expr.Visitor<Object> {
                 if (left instanceof String && right instanceof String)
                     return ((String) left).length() <= ((String) right).length();
 
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected operands of type 'Double' or 'String'");
+                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
             }
             case MINUS -> {
-                checkType(expr.operator, Double.class, left, right);
+                checkNumericOperand(expr.operator, left, right);
                 return (double) left - (double) right;
             }
             case PLUS -> {
@@ -62,16 +62,16 @@ public class Interpreter implements Expr.Visitor<Object> {
                     return (double) left + (double) right;
 
                 if (left instanceof String && right instanceof String)
-                    return (String) left + (String) right; //check if cast is really redundant
+                    return (String) left + right; //check if cast is really redundant
 
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected operands of type 'Double' or 'String'");
+                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
             }
             case SLASH -> {
-                checkType(expr.operator, Double.class, left, right);
+                checkNumericOperand(expr.operator, left, right);
                 return (double) left / (double) right;
             }
             case STAR -> {
-                checkType(expr.operator, Double.class, left, right);
+                checkNumericOperand(expr.operator, left, right);
                 return (double) left * (double) right;
             }
         }
@@ -88,7 +88,7 @@ public class Interpreter implements Expr.Visitor<Object> {
                 return !isTruth(right);
             }
             case MINUS -> {
-                checkType(expr.operator, Double.class, right);
+                checkNumericOperand(expr.operator, right);
                 return -(Double) right;
             }
         }
@@ -120,11 +120,9 @@ public class Interpreter implements Expr.Visitor<Object> {
         return a.equals(b);
     }
 
-    private <T> void checkType(Token operator, Class<T> type, Object ... operands) {
+    private void checkNumericOperand(Token operator, Object ... operands) {
         for (Object operand : operands) {
-            if (type.isInstance(operand)) return;
+            if (!(operand instanceof Double)) throw new RuntimeError(operator, "Operator '" + operator.lexeme + "' expected numbers.");
         }
-
-        throw new RuntimeError(operator, "Operator '" + operator.lexeme + "' expected operand/s of type '" + type.getName() + "'");
     }
 }
