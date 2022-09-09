@@ -1,7 +1,16 @@
 package com.filomar.interpreter;
 
 public class Interpreter implements Expr.Visitor<Object> {
-    public Object evaluate(Expr expr) {
+    void interpret(Expr expr) {
+        try {
+            Object value = evaluate(expr);
+            System.out.println(stringify(value));
+        } catch (RuntimeError error) {
+            Flex.onRuntimeError(error);
+        }
+    }
+
+    Object evaluate(Expr expr) {
         return expr.accept(this);
     }
 
@@ -14,7 +23,7 @@ public class Interpreter implements Expr.Visitor<Object> {
             case BANG_EQUAL -> {
                 return !isEqual(left, right);
             }
-            case EQUAL -> {
+            case EQUAL_EQUAL -> {
                 return isEqual(left, right);
             }
             case GREATER -> {
@@ -57,12 +66,16 @@ public class Interpreter implements Expr.Visitor<Object> {
                 checkNumericOperand(expr.operator, left, right);
                 return (double) left - (double) right;
             }
+            case MODULUS -> {
+                checkNumericOperand(expr.operator, left, right);
+                return (double) left % (double) right;
+            }
             case PLUS -> {
                 if (left instanceof Double && right instanceof Double)
                     return (double) left + (double) right;
 
-                if (left instanceof String && right instanceof String)
-                    return (String) left + right; //check if cast is really redundant
+                if (left instanceof String || right instanceof String)
+                    return stringify(left) + stringify(right);
 
                 throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
             }
@@ -124,5 +137,16 @@ public class Interpreter implements Expr.Visitor<Object> {
         for (Object operand : operands) {
             if (!(operand instanceof Double)) throw new RuntimeError(operator, "Operator '" + operator.lexeme + "' expected numbers.");
         }
+    }
+
+    private String stringify(Object a) {
+        if (a == null) return "null";
+        if (a instanceof Double) {
+            if ((double) a % 1 == 0) {
+                String str = a.toString();
+                return str.substring(0, str.length() - 2);
+            }
+        }
+        return a.toString();
     }
 }

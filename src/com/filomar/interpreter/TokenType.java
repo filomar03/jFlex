@@ -3,7 +3,7 @@ package com.filomar.interpreter;
 public enum TokenType {
     //single character tokens
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
-    COMMA, DOT, SEMICOLON, MINUS, PLUS, SLASH, STAR,
+    COMMA, DOT, SEMICOLON, MINUS, MODULUS, PLUS, SLASH, STAR,
     // One or two character tokens.
     BANG, BANG_EQUAL,
     EQUAL, EQUAL_EQUAL,

@@ -9,7 +9,9 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class Flex {
+    private static final Interpreter interpreter = new Interpreter();
     static boolean hadError = false;
+    static boolean hadRuntimeError = false;
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0)
@@ -27,8 +29,7 @@ public class Flex {
         run(new String(bytes, Charset.defaultCharset()));
 
         if (hadError) System.exit(65);
-
-
+        if (hadRuntimeError) System.exit(70);
     }
 
     private static void runPrompt() throws IOException {
@@ -52,8 +53,7 @@ public class Flex {
 
         if (hadError) return;
 
-        System.out.println(new AstPrinter().stringify(expr));
-        System.out.println(new Interpreter().evaluate(expr));
+        interpreter.interpret(expr);
     }
 
     static void onErrorDetected(int line, int column, String message) {
@@ -61,7 +61,12 @@ public class Flex {
         hadError = true;
     }
 
+    static void onRuntimeError(RuntimeError error) {
+        notifyError(error.token.line, error.token.column, error.getMessage());
+        hadRuntimeError = true;
+    }
+
     private static void notifyError(int line, int column, String message) {
-        System.out.println("[" + line + ":" + column + "] ERROR: " + message);
+        System.err.println("[" + line + ":" + column + "] ERROR: " + message);
     }
 }
