@@ -1,5 +1,7 @@
 package com.filomar.interpreter;
 
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.filomar.interpreter.TokenType.*;
@@ -14,15 +16,20 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    //Top down parsing
-    Expr parse() {
-        try {
-            return expression();
-        } catch (ParseError error) {
-            return null;
+    List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<Stmt>();
+        while (!isAtEnd()) {
+            statements.add(statement());
         }
+
+        return statements;
     }
 
+    private Stmt statement() {
+        return null;
+    }
+
+    //Top down parsing
     private Expr expression() {
         return equality();
     }
@@ -99,13 +106,13 @@ public class Parser {
         throw error(current(), "Expected an expression, found '" + current().lexeme + "'.");
     }
 
-    //Error detection and synchronization
+    //Error detection and recovery
     private ParseError error(Token token, String message) {
         Flex.onErrorDetected(token.line, token.column, message);
         return new ParseError();
     }
 
-    private void synchronize() { //check for error safety
+    private void synchronize() { //come back and check this function, when it will be used in code
         advance();
 
         while (!isAtEnd()) {

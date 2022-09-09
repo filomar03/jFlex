@@ -12,16 +12,14 @@ public class GenerateAst {
             System.exit(64);
         }
         String outputDir = args[0];
-        GenerateAst.defineAst(outputDir, "interpreter", "Expr", Arrays.asList(
-                "Binary   : Expr left, Token operator, Expr right",
-                "Unary    : Token operator, Expr right",
-                "Grouping : Expr expression",
-                "Literal  : Object value"
+        GenerateAst.defineAst(outputDir, "com.filomar.interpreter", "Stmt", Arrays.asList(
+                "Expression : Expr expr",
+                "Print      : Expr expr"
         ));
     }
 
     private static void defineAst(String outputDir, String packageName, String baseClass, List<String> subclasses) throws IOException {
-        String path = outputDir + '\\' + baseClass + ".java";
+        String path = outputDir + '/' + baseClass + ".java";
         PrintWriter writer = new PrintWriter(path, Charset.defaultCharset());
 
         writer.println("package " + packageName + ";\n");

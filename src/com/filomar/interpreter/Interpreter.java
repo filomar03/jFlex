@@ -10,6 +10,7 @@ public class Interpreter implements Expr.Visitor<Object> {
         }
     }
 
+    //Expression evaluation
     Object evaluate(Expr expr) {
         return expr.accept(this);
     }
@@ -119,6 +120,7 @@ public class Interpreter implements Expr.Visitor<Object> {
         return expr.value;
     }
 
+    //Utility methods
     private boolean isTruth(Object obj) {
         if (obj instanceof Boolean) return (boolean) obj;
         if (obj instanceof Double) return (double) obj != 0;
