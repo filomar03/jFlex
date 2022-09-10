@@ -1,6 +1,5 @@
 package com.filomar.interpreter;
 
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,8 +15,9 @@ public class Parser {
         this.tokens = tokens;
     }
 
+    //Top down parsing
     List<Stmt> parse() {
-        List<Stmt> statements = new ArrayList<Stmt>();
+        List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
             statements.add(statement());
         }
@@ -26,10 +26,23 @@ public class Parser {
     }
 
     private Stmt statement() {
-        return null;
+        if (match(PRINT)) return printStatement();
+
+        return expressionStatement();
     }
 
-    //Top down parsing
+    private Stmt expressionStatement() {
+        Expr expr = expression();
+        consume(SEMICOLON, "Expected ';' after expression, found '" + current().lexeme + "' instead.");
+        return new Stmt.Expression(expr);
+    }
+
+    private Stmt printStatement() {
+        Expr value = expression();
+        consume(SEMICOLON, "Expected ';' after print value found '" + current().lexeme + "' instead.");
+        return new Stmt.Print(value);
+    }
+
     private Expr expression() {
         return equality();
     }
@@ -99,14 +112,14 @@ public class Parser {
         if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal);
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
-            consume(RIGHT_PAREN, "Expected ')' after opening parenthesis.");
+            consume(RIGHT_PAREN, "Expected ')', found '" + current().lexeme + "' instead.");
             return new Expr.Grouping(expr);
         }
 
-        throw error(current(), "Expected an expression, found '" + current().lexeme + "'.");
+        throw error(current(), "Expected an expression, found '" + current().lexeme + "' instead.");
     }
 
-    //Error detection and recovery
+    //Error reporting and recovery
     private ParseError error(Token token, String message) {
         Flex.onErrorDetected(token.line, token.column, message);
         return new ParseError();

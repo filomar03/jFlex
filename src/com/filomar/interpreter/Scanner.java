@@ -45,7 +45,7 @@ public class Scanner {
             scanToken();
         }
 
-        tokens.add(new Token(EOF, "", null, line, column + 1));
+        tokens.add(new Token(EOF, "EOF", null, line, column + 1));
         return tokens;
     }
 

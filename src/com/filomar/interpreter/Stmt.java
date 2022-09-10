@@ -22,10 +22,10 @@ abstract class Stmt {
 	}
 
 	static class Print extends Stmt {
-		final Expr expr;
+		final Expr value;
 
 		Print(Expr expr) {
-			this.expr = expr;
+			this.value = expr;
 		}
 
 		@Override

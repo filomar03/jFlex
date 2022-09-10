@@ -1,13 +1,33 @@
 package com.filomar.interpreter;
 
-public class Interpreter implements Expr.Visitor<Object> {
-    void interpret(Expr expr) {
-        try {
-            Object value = evaluate(expr);
-            System.out.println(stringify(value));
-        } catch (RuntimeError error) {
-            Flex.onRuntimeError(error);
+import java.util.List;
+
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+    void interpret(List<Stmt> statements) {
+        for (Stmt statement : statements) {
+            try {
+                execute(statement);
+            } catch (RuntimeError error) {
+                Flex.onRuntimeError(error);
+            }
         }
+    }
+
+    //Statement execution
+    void execute(Stmt stmt) {
+        stmt.accept(this);
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expr);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        System.out.println(stringify(evaluate(stmt.value)));
+        return null;
     }
 
     //Expression evaluation
