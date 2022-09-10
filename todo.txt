@@ -1,0 +1,1 @@
+determine which error in scanner should be fatal (stop program execution) and which not

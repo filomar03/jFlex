@@ -11,10 +11,17 @@ public class GenerateAst {
             System.out.println("Usage: GenerateAst <output directory>");
             System.exit(64);
         }
-        String outputDir = args[0];
-        GenerateAst.defineAst(outputDir, "com.filomar.interpreter", "Stmt", Arrays.asList(
+        defineAst(args[0], "com.filomar.interpreter", "Expr", Arrays.asList(
+                "Binary   : Expr left, Token operator, Expr right",
+                "Unary    : Token operator, Expr right",
+                "Grouping : Expr expr",
+                "Literal  : Object value",
+                "Variable : Token name"
+        ));
+        defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
                 "Expression : Expr expr",
-                "Print      : Expr expr"
+                "Print      : Expr expr",
+                "Variable   : Token name, Expr expr"
         ));
     }
 
