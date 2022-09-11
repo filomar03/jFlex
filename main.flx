@@ -1,1 +1,3 @@
-print "porcodddd" + 1 + 0;
+var a = 130;
+var b = 65;
+print a / b;

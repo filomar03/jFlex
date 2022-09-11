@@ -3,6 +3,8 @@ package com.filomar.interpreter;
 import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+    private Environment environment = new Environment();
+
     void interpret(List<Stmt> statements) {
         for (Stmt statement : statements) {
             try {
@@ -19,8 +21,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Void visitExpressionStmt(Stmt.Expression stmt) {
-        evaluate(stmt.expr);
+    public Void visitVarDclStmt(Stmt.VarDcl stmt) {
+        environment.newBinding(stmt.identifier.lexeme, evaluate(stmt.initializer));
         return null;
     }
 
@@ -30,9 +32,22 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expr);
+        return null;
+    }
+
     //Expression evaluation
     Object evaluate(Expr expr) {
         return expr.accept(this);
+    }
+
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.expr);
+        environment.setValue(expr.identifier, value);
+        return value;
     }
 
     @Override
@@ -138,6 +153,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
+    }
+
+    @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.getValue(expr.identifier);
     }
 
     //Utility methods

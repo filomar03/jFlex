@@ -2,6 +2,7 @@ package com.filomar.interpreter;
 
 abstract class Expr {
 	interface Visitor<R> {
+		R visitAssignExpr(Assign expr);
 		R visitBinaryExpr(Binary expr);
 		R visitUnaryExpr(Unary expr);
 		R visitGroupingExpr(Grouping expr);
@@ -10,6 +11,21 @@ abstract class Expr {
 	}
 
 	abstract <R> R accept(Visitor<R> visitor);
+
+	static class Assign extends Expr {
+		final Token identifier;
+		final Expr expr;
+
+		Assign(Token identifier, Expr expr) {
+			this.identifier = identifier;
+			this.expr = expr;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitAssignExpr(this);
+		}
+	}
 
 	static class Binary extends Expr {
 		final Expr left;
@@ -30,11 +46,11 @@ abstract class Expr {
 
 	static class Unary extends Expr {
 		final Token operator;
-		final Expr right;
+		final Expr expr;
 
-		Unary(Token operator, Expr right) {
+		Unary(Token operator, Expr expr) {
 			this.operator = operator;
-			this.right = right;
+			this.expr = expr;
 		}
 
 		@Override
@@ -70,12 +86,10 @@ abstract class Expr {
 	}
 
 	static class Variable extends Expr {
-		final String name;
-		final Expr initializer;
+		final Token identifier;
 
-		Variable(String name, Expr initializer) {
-			this.name = name;
-			this.initializer = initializer;
+		Variable(Token identifier) {
+			this.identifier = identifier;
 		}
 
 		@Override

@@ -12,16 +12,17 @@ public class GenerateAst {
             System.exit(64);
         }
         defineAst(args[0], "com.filomar.interpreter", "Expr", Arrays.asList(
+                "Assign   : Token identifier, Expr expr",
                 "Binary   : Expr left, Token operator, Expr right",
-                "Unary    : Token operator, Expr right",
+                "Unary    : Token operator, Expr expr",
                 "Grouping : Expr expr",
                 "Literal  : Object value",
-                "Variable : Token name"
+                "Variable : Token identifier"
         ));
         defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
                 "Expression : Expr expr",
-                "Print      : Expr expr",
-                "Variable   : Token name, Expr expr"
+                "Print      : Expr value",
+                "VarDcl     : Token identifier, Expr initializer"
         ));
     }
 

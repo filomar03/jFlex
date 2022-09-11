@@ -15,7 +15,6 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    //Top down parsing
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
@@ -25,26 +24,62 @@ public class Parser {
         return statements;
     }
 
+    //statement parsing
     private Stmt statement() {
-        if (match(PRINT)) return printStatement();
-
-        return expressionStatement();
+        try {
+            if (match(VAR)) return declarationStmt();
+            if (match(PRINT)) return printStmt();
+            return expressionStmt();
+        } catch (ParseError error) {
+            synchronize();
+            return null;
+        }
     }
 
-    private Stmt expressionStatement() {
+    private Stmt declarationStmt() {
+        Token identifier = consume(IDENTIFIER, "Expected variable name after definition, found '" + current().lexeme + "' instead.");
+
+        Expr initializer = new Expr.Literal(null);
+        if (match(EQUAL)) {
+            initializer = expression();
+        }
+
+        consume(SEMICOLON, "Expected ';' at the end of the statement, found '" + current().lexeme + "' instead.");
+        return new Stmt.VarDcl(identifier, initializer);
+    }
+
+    private Stmt expressionStmt() {
         Expr expr = expression();
-        consume(SEMICOLON, "Expected ';' after expression, found '" + current().lexeme + "' instead.");
+        consume(SEMICOLON, "Expected ';' at the end of the statement, found '" + current().lexeme + "' instead.");
         return new Stmt.Expression(expr);
     }
 
-    private Stmt printStatement() {
+    private Stmt printStmt() {
         Expr value = expression();
-        consume(SEMICOLON, "Expected ';' after print value found '" + current().lexeme + "' instead.");
+        consume(SEMICOLON, "Expected ';' at the end of the statement found '" + current().lexeme + "' instead.");
         return new Stmt.Print(value);
     }
 
+    //Top down expression parsing
     private Expr expression() {
-        return equality();
+        return assignment();
+    }
+
+    private Expr assignment() {
+        Expr expr = equality();
+
+        if (match(EQUAL)) {
+            Token op = previous();
+            Expr right = assignment();
+
+            if (expr instanceof Expr.Variable) {
+                return new Expr.Assign(((Expr.Variable) expr).identifier, right);
+            }
+
+            throw error(op, "Invalid assignment target");
+        }
+
+        return expr;
     }
 
     private Expr equality() {
@@ -98,8 +133,8 @@ public class Parser {
     private Expr unary() {
         if (match(BANG, MINUS)) {
             Token op = previous();
-            Expr right = unary();
-            return new Expr.Unary(op, right);
+            Expr expr = unary();
+            return new Expr.Unary(op, expr);
         }
 
         return primary();
@@ -110,6 +145,7 @@ public class Parser {
         if (match(TRUE)) return new Expr.Literal(true);
         if (match(NULL)) return new Expr.Literal(null);
         if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal);
+        if (match(IDENTIFIER)) return new Expr.Variable(previous());
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expected ')', found '" + current().lexeme + "' instead.");

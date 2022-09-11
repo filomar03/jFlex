@@ -6,6 +6,11 @@ public class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitAssignExpr(Expr.Assign expr) { //not implemented
+        return null;
+    }
+
+    @Override
     public String visitBinaryExpr(Expr.Binary expr) {
         return "(" + expr.left.accept(this) + " " + expr.operator.lexeme + " " + expr.right.accept(this) + ")";
     }
@@ -23,5 +28,10 @@ public class AstPrinter implements Expr.Visitor<String> {
     @Override
     public String visitLiteralExpr(Expr.Literal expr) {
         return expr.value.toString();
+    }
+
+    @Override
+    public String visitVariableExpr(Expr.Variable expr) { //not implemented
+        return null;
     }
 }
