@@ -15,14 +15,15 @@ public class GenerateAst {
                 "Assign   : Token identifier, Expr expr",
                 "Binary   : Expr left, Token operator, Expr right",
                 "Unary    : Token operator, Expr expr",
-                "Grouping : Expr expr",
                 "Literal  : Object value",
-                "Variable : Token identifier"
-        ));
+                "Variable : Token identifier",
+                "Grouping : Expr expr"
+                ));
         defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
-                "Expression : Expr expr",
                 "Print      : Expr value",
-                "VarDcl     : Token identifier, Expr initializer"
+                "VarDcl     : Token identifier, Expr initializer",
+                "Block      : List<Stmt> statements",
+                "Expression : Expr expr"
         ));
     }
 
@@ -31,6 +32,7 @@ public class GenerateAst {
         PrintWriter writer = new PrintWriter(path, Charset.defaultCharset());
 
         writer.println("package " + packageName + ";\n");
+        writer.println("import java.util.List;\n");
         writer.println("abstract class " + baseClass + " {");
 
         defineVisitor(writer, baseClass, subclasses);

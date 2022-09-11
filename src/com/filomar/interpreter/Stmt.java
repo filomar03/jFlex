@@ -1,26 +1,16 @@
 package com.filomar.interpreter;
 
+import java.util.List;
+
 abstract class Stmt {
 	interface Visitor<R> {
-		R visitExpressionStmt(Expression stmt);
 		R visitPrintStmt(Print stmt);
 		R visitVarDclStmt(VarDcl stmt);
+		R visitBlockStmt(Block stmt);
+		R visitExpressionStmt(Expression stmt);
 	}
 
 	abstract <R> R accept(Visitor<R> visitor);
-
-	static class Expression extends Stmt {
-		final Expr expr;
-
-		Expression(Expr expr) {
-			this.expr = expr;
-		}
-
-		@Override
-		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitExpressionStmt(this);
-		}
-	}
 
 	static class Print extends Stmt {
 		final Expr value;
@@ -47,6 +37,32 @@ abstract class Stmt {
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitVarDclStmt(this);
+		}
+	}
+
+	static class Block extends Stmt {
+		final List<Stmt> statements;
+
+		Block(List<Stmt> statements) {
+			this.statements = statements;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitBlockStmt(this);
+		}
+	}
+
+	static class Expression extends Stmt {
+		final Expr expr;
+
+		Expression(Expr expr) {
+			this.expr = expr;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitExpressionStmt(this);
 		}
 	}
 

@@ -1,13 +1,15 @@
 package com.filomar.interpreter;
 
+import java.util.List;
+
 abstract class Expr {
 	interface Visitor<R> {
 		R visitAssignExpr(Assign expr);
 		R visitBinaryExpr(Binary expr);
 		R visitUnaryExpr(Unary expr);
-		R visitGroupingExpr(Grouping expr);
 		R visitLiteralExpr(Literal expr);
 		R visitVariableExpr(Variable expr);
+		R visitGroupingExpr(Grouping expr);
 	}
 
 	abstract <R> R accept(Visitor<R> visitor);
@@ -59,19 +61,6 @@ abstract class Expr {
 		}
 	}
 
-	static class Grouping extends Expr {
-		final Expr expr;
-
-		Grouping(Expr expr) {
-			this.expr = expr;
-		}
-
-		@Override
-		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitGroupingExpr(this);
-		}
-	}
-
 	static class Literal extends Expr {
 		final Object value;
 
@@ -95,6 +84,19 @@ abstract class Expr {
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitVariableExpr(this);
+		}
+	}
+
+	static class Grouping extends Expr {
+		final Expr expr;
+
+		Grouping(Expr expr) {
+			this.expr = expr;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitGroupingExpr(this);
 		}
 	}
 

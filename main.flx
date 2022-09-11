@@ -1,3 +1,7 @@
 var a = 130;
 var b = 65;
 print a / b;
+{
+    print "ciao mondo";
+}
+print b;

@@ -29,11 +29,18 @@ public class Parser {
         try {
             if (match(VAR)) return declarationStmt();
             if (match(PRINT)) return printStmt();
+            if (match(LEFT_BRACE)) return new Stmt.Block(stmtCollector());
             return expressionStmt();
         } catch (ParseError error) {
             synchronize();
             return null;
         }
+    }
+
+    private Stmt printStmt() {
+        Expr value = expression();
+        consume(SEMICOLON, "Expected ';' at the end of the statement found '" + current().lexeme + "' instead.");
+        return new Stmt.Print(value);
     }
 
     private Stmt declarationStmt() {
@@ -48,16 +55,21 @@ public class Parser {
         return new Stmt.VarDcl(identifier, initializer);
     }
 
+    private List<Stmt> stmtCollector() {
+        List<Stmt> statements = new ArrayList<>();
+
+        while (current().type != RIGHT_BRACE && !isAtEnd()) {
+            statements.add(statement()); //review this line, statement parsing workflow shows a structural difference from the reference
+        }
+
+        consume(RIGHT_BRACE, "Expected '}' at the end of the block statement, found '" + current().lexeme + "' instead.");
+        return statements;
+    }
+
     private Stmt expressionStmt() {
         Expr expr = expression();
         consume(SEMICOLON, "Expected ';' at the end of the statement, found '" + current().lexeme + "' instead.");
         return new Stmt.Expression(expr);
-    }
-
-    private Stmt printStmt() {
-        Expr value = expression();
-        consume(SEMICOLON, "Expected ';' at the end of the statement found '" + current().lexeme + "' instead.");
-        return new Stmt.Print(value);
     }
 
     //Top down expression parsing
@@ -161,18 +173,16 @@ public class Parser {
         return new ParseError();
     }
 
-    private void synchronize() { //come back and check this function, when it will be used in code
-        advance();
-
+    private void synchronize() {
         while (!isAtEnd()) {
             if (previous().type == SEMICOLON) return;
 
             switch (current().type) {
-                case CLASS, FUN, VAR, FOR, IF, WHILE, PRINT, RETURN -> { return; }
+                case CLASS, FUN, FOR, IF, PRINT, RETURN, VAR, WHILE -> { return; }
             }
-        }
 
-        advance();
+            advance();
+        }
     }
 
     //Token list management

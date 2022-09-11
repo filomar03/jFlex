@@ -6,12 +6,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private Environment environment = new Environment();
 
     void interpret(List<Stmt> statements) {
-        for (Stmt statement : statements) {
-            try {
+        try {
+            for (Stmt statement : statements) {
                 execute(statement);
-            } catch (RuntimeError error) {
-                Flex.onRuntimeError(error);
             }
+        } catch (RuntimeError error) {
+            Flex.onRuntimeError(error);
         }
     }
 
@@ -29,6 +29,17 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitPrintStmt(Stmt.Print stmt) {
         System.out.println(stringify(evaluate(stmt.value)));
+        return null;
+    }
+
+    @Override
+    public Void visitBlockStmt(Stmt.Block block) {
+        Environment outerEnv = environment;
+        this.environment = new Environment(outerEnv);
+
+        interpret(block.statements); //why doesn't the author use this method
+
+        this.environment = outerEnv;
         return null;
     }
 
