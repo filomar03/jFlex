@@ -1,3 +1,7 @@
+NOW:
+review top-down structure of statements parsing
+
+END STAGES OF DEV:
 determine which error in scanner should be fatal (stop program execution) and which not
 implement different type of assignments
-static checking for variables accessing without prior definition
+static checking for variables accessing without prior definition (not at runtime)
