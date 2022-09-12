@@ -20,10 +20,11 @@ public class GenerateAst {
                 "Grouping : Expr expr"
                 ));
         defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
-                "Print      : Expr value",
-                "VarDcl     : Token identifier, Expr initializer",
                 "Block      : List<Stmt> statements",
-                "Expression : Expr expr"
+                "Expression : Expr expr",
+                "Branching  : Expr condition, Expr then, Expr else",
+                "VarDcl     : Token identifier, Expr initializer",
+                "Print      : Expr value"
         ));
     }
 

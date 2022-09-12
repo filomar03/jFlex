@@ -21,18 +21,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Void visitVarDclStmt(Stmt.VarDcl stmt) {
-        environment.newBinding(stmt.identifier.lexeme, evaluate(stmt.initializer));
-        return null;
-    }
-
-    @Override
-    public Void visitPrintStmt(Stmt.Print stmt) {
-        System.out.println(stringify(evaluate(stmt.value)));
-        return null;
-    }
-
-    @Override
     public Void visitBlockStmt(Stmt.Block block) {
         Environment outerEnv = environment;
         this.environment = new Environment(outerEnv);
@@ -46,6 +34,23 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expr);
+        return null;
+    }
+
+    @Override
+    public Void visitBranchingStmt(Stmt.Branching stmt) {
+        return null;
+    }
+
+    @Override
+    public Void visitVarDclStmt(Stmt.VarDcl stmt) {
+        environment.newBinding(stmt.identifier.lexeme, evaluate(stmt.initializer));
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        System.out.println(stringify(evaluate(stmt.value)));
         return null;
     }
 
