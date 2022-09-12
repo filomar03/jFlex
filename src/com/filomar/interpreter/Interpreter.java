@@ -16,8 +16,29 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     //Statement execution
-    void execute(Stmt stmt) {
+    private void execute(Stmt stmt) {
         stmt.accept(this);
+    }
+
+    @Override
+    public Void visitVarDclStmt(Stmt.VarDcl stmt) {
+        environment.newBinding(stmt.identifier.lexeme, evaluate(stmt.initializer));
+        return null;
+    }
+
+    @Override
+    public Void visitBranchingStmt(Stmt.Branching stmt) {
+        if (isTruth(evaluate(stmt.condition)))
+            execute(stmt.thenBranch);
+        else if (stmt.elseBranch != null)
+            execute(stmt.thenBranch);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        System.out.println(stringify(evaluate(stmt.value)));
+        return null;
     }
 
     @Override
@@ -37,25 +58,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
-    @Override
-    public Void visitBranchingStmt(Stmt.Branching stmt) {
-        return null;
-    }
-
-    @Override
-    public Void visitVarDclStmt(Stmt.VarDcl stmt) {
-        environment.newBinding(stmt.identifier.lexeme, evaluate(stmt.initializer));
-        return null;
-    }
-
-    @Override
-    public Void visitPrintStmt(Stmt.Print stmt) {
-        System.out.println(stringify(evaluate(stmt.value)));
-        return null;
-    }
-
     //Expression evaluation
-    Object evaluate(Expr expr) {
+    private Object evaluate(Expr expr) {
         return expr.accept(this);
     }
 
@@ -162,11 +166,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Object visitGroupingExpr(Expr.Grouping expr) {
-        return evaluate(expr.expr);
-    }
-
-    @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
     }
@@ -174,6 +173,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
         return environment.getValue(expr.identifier);
+    }
+
+    @Override
+    public Object visitGroupingExpr(Expr.Grouping expr) {
+        return evaluate(expr.expr);
     }
 
     //Utility methods

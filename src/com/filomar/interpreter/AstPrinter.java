@@ -34,4 +34,7 @@ public class AstPrinter implements Expr.Visitor<String> {
     public String visitVariableExpr(Expr.Variable expr) { //not implemented
         return null;
     }
+
+    //class created to test program, before parser
+    //deprecated and not complete
 }

@@ -18,32 +18,19 @@ public class Parser {
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
-            statements.add(statement());
+            statements.add(declaration());
         }
 
         return statements;
     }
 
     //statement parsing
-    private Stmt statement() {
-        try {
-            if (match(VAR)) return declarationStmt();
-            if (match(PRINT)) return printStmt();
-            if (match(LEFT_BRACE)) return new Stmt.Block(stmtCollector());
-            return expressionStmt();
-        } catch (ParseError error) {
-            synchronize();
-            return null;
-        }
+    private Stmt declaration() {
+        if (match(VAR)) return varDclStmt();
+        return statement();
     }
 
-    private Stmt printStmt() {
-        Expr value = expression();
-        consume(SEMICOLON, "Expected ';' at the end of the statement found '" + current().lexeme + "' instead.");
-        return new Stmt.Print(value);
-    }
-
-    private Stmt declarationStmt() {
+    private Stmt varDclStmt() {
         Token identifier = consume(IDENTIFIER, "Expected variable name after definition, found '" + current().lexeme + "' instead.");
 
         Expr initializer = new Expr.Literal(null);
@@ -55,11 +42,42 @@ public class Parser {
         return new Stmt.VarDcl(identifier, initializer);
     }
 
+    private Stmt statement() {
+        try {
+            if (match(IF)) return branchingStmt();
+            if (match(PRINT)) return printStmt();
+            if (match(LEFT_BRACE)) return new Stmt.Block(stmtCollector());
+            return expressionStmt();
+        } catch (ParseError error) {
+            synchronize();
+            return null;
+        }
+    }
+
+    private Stmt branchingStmt() {
+        consume(LEFT_PAREN, "Expected '('.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expected ')'.");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(ELSE)) {
+            elseBranch = statement();
+        }
+        return new Stmt.Branching(condition, thenBranch, elseBranch);
+    }
+
+    private Stmt printStmt() {
+        Expr value = expression();
+        consume(SEMICOLON, "Expected ';' at the end of the statement found '" + current().lexeme + "' instead.");
+        return new Stmt.Print(value);
+    }
+
     private List<Stmt> stmtCollector() {
         List<Stmt> statements = new ArrayList<>();
 
         while (current().type != RIGHT_BRACE && !isAtEnd()) {
-            statements.add(statement()); //review this line, statement parsing workflow shows a structural difference from the reference
+            statements.add(declaration());
         }
 
         consume(RIGHT_BRACE, "Expected '}' at the end of the block statement, found '" + current().lexeme + "' instead.");
@@ -74,15 +92,15 @@ public class Parser {
 
     //Top down expression parsing
     private Expr expression() {
-        return assignment();
+        return assignmentExpr();
     }
 
-    private Expr assignment() {
-        Expr expr = equality();
+    private Expr assignmentExpr() {
+        Expr expr = equalityExpr();
 
         if (match(EQUAL)) {
             Token op = previous();
-            Expr right = assignment();
+            Expr right = assignmentExpr();
 
             if (expr instanceof Expr.Variable) {
                 return new Expr.Assign(((Expr.Variable) expr).identifier, right);
@@ -94,65 +112,65 @@ public class Parser {
         return expr;
     }
 
-    private Expr equality() {
-        Expr expr = comparison();
+    private Expr equalityExpr() {
+        Expr expr = comparisonExpr();
 
         while (match(BANG_EQUAL, EQUAL_EQUAL)) {
             Token op = previous();
-            Expr right = comparison();
+            Expr right = comparisonExpr();
             expr = new Expr.Binary(expr, op, right);
         }
 
         return expr;
     }
 
-    private Expr comparison() {
-        Expr expr = term();
+    private Expr comparisonExpr() {
+        Expr expr = termExpr();
 
         while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
             Token op = previous();
-            Expr right = term();
+            Expr right = termExpr();
             expr = new Expr.Binary(expr, op, right);
         }
 
         return expr;
     }
 
-    private Expr term() {
-        Expr expr = factor();
+    private Expr termExpr() {
+        Expr expr = factorExpr();
 
         while (match(MINUS, PLUS)) {
             Token op = previous();
-            Expr right = factor();
+            Expr right = factorExpr();
             expr = new Expr.Binary(expr, op, right);
         }
 
         return expr;
     }
 
-    private Expr factor() {
-        Expr expr = unary();
+    private Expr factorExpr() {
+        Expr expr = unaryExpr();
 
         while (match(SLASH, STAR, MODULUS)) {
             Token op = previous();
-            Expr right = unary();
+            Expr right = unaryExpr();
             expr = new Expr.Binary(expr, op, right);
         }
 
         return expr;
     }
 
-    private Expr unary() {
+    private Expr unaryExpr() {
         if (match(BANG, MINUS)) {
             Token op = previous();
-            Expr expr = unary();
+            Expr expr = unaryExpr();
             return new Expr.Unary(op, expr);
         }
 
-        return primary();
+        return primaryExpr();
     }
 
-    private Expr primary() {
+    private Expr primaryExpr() {
         if (match(FALSE)) return new Expr.Literal(false);
         if (match(TRUE)) return new Expr.Literal(true);
         if (match(NULL)) return new Expr.Literal(null);

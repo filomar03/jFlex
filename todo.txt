@@ -1,5 +1,6 @@
 NOW:
-review top-down structure of statements parsing
+review all errors messages thrown by flex
+think of a better name for declaration() function in Parser.java (should still remind that is a stmt, since statement() function should parse a littler group of statements)
 
 END STAGES OF DEV:
 determine which error in scanner should be fatal (stop program execution) and which not
