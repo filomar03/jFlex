@@ -96,7 +96,7 @@ public class Parser {
     }
 
     private Expr assignmentExpr() {
-        Expr expr = equalityExpr();
+        Expr expr = logicalOrExpr();
 
         if (match(EQUAL)) {
             Token op = previous();
@@ -107,6 +107,30 @@ public class Parser {
             }
 
             throw error(op, "Invalid assignment target");
+        }
+
+        return expr;
+    }
+
+    private Expr logicalOrExpr() { //separated in two methods to assure AND op has precedence over OR op
+        Expr expr = logicalAndExpr();
+
+        if (match(OR)) {
+            Token op = previous();
+            Expr right = logicalAndExpr();
+            expr = new Expr.Logical(expr, op, right);
+        }
+
+        return expr;
+    }
+
+    private Expr logicalAndExpr() {
+        Expr expr = equalityExpr();
+
+        if (match(AND)) {
+            Token op = previous();
+            Expr right = comparisonExpr();
+            expr = new Expr.Logical(expr, op, right);
         }
 
         return expr;

@@ -1,2 +1,2 @@
-if (null)
+if (1 or 0)
     print "ciao";

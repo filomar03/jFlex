@@ -13,6 +13,7 @@ public class GenerateAst {
         }
         defineAst(args[0], "com.filomar.interpreter", "Expr", Arrays.asList(
                 "Assign   : Token identifier, Expr expr",
+                "Logical  : Expr left, Token op, Expr right", //introduced a new class for logical operations to allow short-circuiting without modifying Binary class code
                 "Binary   : Expr left, Token operator, Expr right",
                 "Unary    : Token operator, Expr expr",
                 "Literal  : Object value",

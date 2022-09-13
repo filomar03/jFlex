@@ -11,6 +11,11 @@ public class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitLogicalExpr(Expr.Logical expr) {
+        return null;
+    }
+
+    @Override
     public String visitBinaryExpr(Expr.Binary expr) {
         return "(" + expr.left.accept(this) + " " + expr.operator.lexeme + " " + expr.right.accept(this) + ")";
     }

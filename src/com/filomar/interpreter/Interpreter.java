@@ -71,70 +71,29 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.left);
+
+        switch (expr.op.type) { //DIY short-circuiting even if java operators already have it
+            case AND -> {
+                if (!isTruth(left))
+                    return false;
+            }
+            case OR -> {
+                if (isTruth(left))
+                    return true;
+            }
+        }
+
+        return isTruth(evaluate(expr.right));
+    }
+
+    @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
         Object left = evaluate(expr.left);
         Object right = evaluate(expr.right);
 
         switch (expr.operator.type) {
-            case BANG_EQUAL -> {
-                return !isEqual(left, right);
-            }
-            case EQUAL_EQUAL -> {
-                return isEqual(left, right);
-            }
-            case GREATER -> {
-                if (left instanceof Double && right instanceof Double)
-                    return (double) left > (double) right;
-
-                if (left instanceof String && right instanceof String)
-                    return ((String) left).length() > ((String) right).length();
-
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
-            }
-            case GREATER_EQUAL -> {
-                if (left instanceof Double && right instanceof Double)
-                    return (double) left >= (double) right;
-
-                if (left instanceof String && right instanceof String)
-                    return ((String) left).length() >= ((String) right).length();
-
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
-            }
-            case LESS -> {
-                if (left instanceof Double && right instanceof Double)
-                    return (double) left < (double) right;
-
-                if (left instanceof String && right instanceof String)
-                    return ((String) left).length() < ((String) right).length();
-
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
-            }
-            case LESS_EQUAL -> {
-                if (left instanceof Double && right instanceof Double)
-                    return (double) left <= (double) right;
-
-                if (left instanceof String && right instanceof String)
-                    return ((String) left).length() <= ((String) right).length();
-
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
-            }
-            case MINUS -> {
-                checkNumericOperand(expr.operator, left, right);
-                return (double) left - (double) right;
-            }
-            case MODULUS -> {
-                checkNumericOperand(expr.operator, left, right);
-                return (double) left % (double) right;
-            }
-            case PLUS -> {
-                if (left instanceof Double && right instanceof Double)
-                    return (double) left + (double) right;
-
-                if (left instanceof String || right instanceof String)
-                    return stringify(left) + stringify(right);
-
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
-            }
             case SLASH -> {
                 checkNumericOperand(expr.operator, left, right);
                 return (double) left / (double) right;
@@ -142,6 +101,75 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             case STAR -> {
                 checkNumericOperand(expr.operator, left, right);
                 return (double) left * (double) right;
+            }
+            case MODULUS -> {
+                checkNumericOperand(expr.operator, left, right);
+                return (double) left % (double) right;
+            }
+            case MINUS -> {
+                checkNumericOperand(expr.operator, left, right);
+                return (double) left - (double) right;
+            }
+            case PLUS -> {
+                if (left instanceof Double && right instanceof Double) {
+                    return (double) left + (double) right;
+                }
+
+                if (left instanceof String || right instanceof String) {
+                    return stringify(left) + stringify(right);
+                }
+
+                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
+            }
+            case GREATER -> {
+                if (left instanceof Double && right instanceof Double) {
+                    return (double) left > (double) right;
+                }
+
+                if (left instanceof String && right instanceof String) {
+                    return ((String) left).length() > ((String) right).length();
+                }
+
+                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
+            }
+            case GREATER_EQUAL -> {
+                if (left instanceof Double && right instanceof Double) {
+                    return (double) left >= (double) right;
+                }
+
+                if (left instanceof String && right instanceof String) {
+                    return ((String) left).length() >= ((String) right).length();
+                }
+
+                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
+            }
+            case LESS -> {
+                if (left instanceof Double && right instanceof Double) {
+                    return (double) left < (double) right;
+                }
+
+                if (left instanceof String && right instanceof String) {
+                    return ((String) left).length() < ((String) right).length();
+                }
+
+                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
+            }
+            case LESS_EQUAL -> {
+                if (left instanceof Double && right instanceof Double) {
+                    return (double) left <= (double) right;
+                }
+
+                if (left instanceof String && right instanceof String) {
+                    return ((String) left).length() <= ((String) right).length();
+                }
+
+                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
+            }
+            case BANG_EQUAL -> {
+                return !isEqual(left, right);
+            }
+            case EQUAL_EQUAL -> {
+                return isEqual(left, right);
             }
         }
 
