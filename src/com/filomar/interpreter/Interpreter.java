@@ -77,15 +77,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         switch (expr.op.type) { //DIY short-circuiting even if java operators already have it
             case AND -> {
                 if (!isTruth(left))
-                    return false;
+                    return left;
             }
             case OR -> {
                 if (isTruth(left))
-                    return true;
+                    return left;
             }
         }
 
-        return isTruth(evaluate(expr.right));
+        return evaluate(expr.right);
     }
 
     @Override
