@@ -1,9 +1,12 @@
 package com.filomar.interpreter;
 
+import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.filomar.interpreter.TokenType.*;
+import static java.util.Arrays.*;
 
 public class Parser {
     private static class ParseError extends RuntimeException {}
@@ -44,7 +47,9 @@ public class Parser {
 
     private Stmt statement() {
         try {
-            if (match(IF)) return branchingStmt();
+            if (match(IF)) return ifStmt();
+            if (match(WHILE)) return whileStmt();
+            if (match(FOR)) return forStmt();
             if (match(PRINT)) return printStmt();
             if (match(LEFT_BRACE)) return new Stmt.Block(stmtCollector());
             return expressionStmt();
@@ -54,7 +59,7 @@ public class Parser {
         }
     }
 
-    private Stmt branchingStmt() {
+    private Stmt ifStmt() {
         consume(LEFT_PAREN, "Expected '('.");
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expected ')'.");
@@ -64,7 +69,63 @@ public class Parser {
         if (match(ELSE)) {
             elseBranch = statement();
         }
-        return new Stmt.Branching(condition, thenBranch, elseBranch);
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
+    }
+
+    private Stmt whileStmt() {
+        consume(LEFT_PAREN, "Expected '('.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expected ')'.");
+
+        Stmt body = statement();
+
+        return new Stmt.While(condition, body);
+    }
+
+    private Stmt forStmt() {
+        consume(LEFT_PAREN, "Expected '('.");
+
+        Stmt initializer;
+        if (match(SEMICOLON)) {
+            initializer = null;
+        } else if (match(VAR)) {
+            initializer = varDclStmt();
+        } else {
+            initializer = expressionStmt();
+        }
+
+        Expr condition = null;
+        if (!match(SEMICOLON)) {
+            condition = expression();
+            consume(SEMICOLON, "Expected ';' after initializer");
+        }
+
+        Expr increment = null;
+        if (!match(RIGHT_PAREN)) {
+            increment = expression();
+            consume(RIGHT_PAREN, "Expected ')'.");
+        }
+
+        Stmt body = statement();
+
+        if (increment != null) { //add elements of body not itself to avoid creating a nested block stmt
+            body = new Stmt.Block(Arrays.asList(
+                    body,
+                    new Stmt.Expression(increment)
+            ));
+        }
+
+        body = new Stmt.While((condition != null ? condition : new Expr.Literal(true)), body);
+
+        if (initializer != null) {
+            body = new Stmt.Block(Arrays.asList(
+                    initializer,
+                    body
+            ));
+        }
+
+        return body;
     }
 
     private Stmt printStmt() {
@@ -215,7 +276,10 @@ public class Parser {
         return new ParseError();
     }
 
-    private void synchronize() {
+    private void synchronize() { //EOF safe
+        if (!isAtEnd())
+            advance();
+
         while (!isAtEnd()) {
             if (previous().type == SEMICOLON) return;
 

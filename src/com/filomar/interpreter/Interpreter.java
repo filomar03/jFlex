@@ -27,11 +27,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Void visitBranchingStmt(Stmt.Branching stmt) {
+    public Void visitIfStmt(Stmt.If stmt) {
         if (isTruth(evaluate(stmt.condition)))
             execute(stmt.thenBranch);
         else if (stmt.elseBranch != null)
             execute(stmt.thenBranch);
+        return null;
+    }
+
+    @Override
+    public Void visitWhileStmt(Stmt.While stmt) {
+        while (isTruth(evaluate(stmt.condition))) {
+            execute(stmt.body);
+        }
         return null;
     }
 
@@ -43,7 +51,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitBlockStmt(Stmt.Block block) {
-        Environment outerEnv = environment;
+        Environment outerEnv = this.environment;
         this.environment = new Environment(outerEnv);
 
         interpret(block.statements); //why doesn't the author use this method
@@ -67,6 +75,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.expr);
         environment.setValue(expr.identifier, value);
+        System.out.println(environment.getValue(expr.identifier));
         return value;
     }
 

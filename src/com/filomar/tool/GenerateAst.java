@@ -22,7 +22,8 @@ public class GenerateAst {
                 ));
         defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
                 "VarDcl     : Token identifier, Expr initializer",
-                "Branching  : Expr condition, Stmt thenBranch, Stmt elseBranch",
+                "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
+                "While      : Expr condition, Stmt body",
                 "Print      : Expr value",
                 "Block      : List<Stmt> statements",
                 "Expression : Expr expr"

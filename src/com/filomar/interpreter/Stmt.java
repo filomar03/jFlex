@@ -5,7 +5,8 @@ import java.util.List;
 abstract class Stmt {
 	interface Visitor<R> {
 		R visitVarDclStmt(VarDcl stmt);
-		R visitBranchingStmt(Branching stmt);
+		R visitIfStmt(If stmt);
+		R visitWhileStmt(While stmt);
 		R visitPrintStmt(Print stmt);
 		R visitBlockStmt(Block stmt);
 		R visitExpressionStmt(Expression stmt);
@@ -28,12 +29,12 @@ abstract class Stmt {
 		}
 	}
 
-	static class Branching extends Stmt {
+	static class If extends Stmt {
 		final Expr condition;
 		final Stmt thenBranch;
 		final Stmt elseBranch;
 
-		Branching(Expr condition, Stmt thenBranch, Stmt elseBranch) {
+		If(Expr condition, Stmt thenBranch, Stmt elseBranch) {
 			this.condition = condition;
 			this.thenBranch = thenBranch;
 			this.elseBranch = elseBranch;
@@ -41,7 +42,22 @@ abstract class Stmt {
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitBranchingStmt(this);
+			return visitor.visitIfStmt(this);
+		}
+	}
+
+	static class While extends Stmt {
+		final Expr condition;
+		final Stmt body;
+
+		While(Expr condition, Stmt body) {
+			this.condition = condition;
+			this.body = body;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitWhileStmt(this);
 		}
 	}
 

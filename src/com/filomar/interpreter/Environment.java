@@ -4,15 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Environment {
-    private final Environment enclosure;
+    private final Environment parent;
     private final Map<String, Object> bindings = new HashMap<>();
 
     Environment() {
-        enclosure = null;
+        parent = null;
     }
 
     Environment(Environment enclosure) {
-        this.enclosure = enclosure;
+        this.parent = enclosure;
     }
 
     void newBinding(String name, Object value) {
@@ -23,8 +23,8 @@ public class Environment {
         if (bindings.containsKey(identifier.lexeme))
             return bindings.get(identifier.lexeme);
 
-        if (enclosure != null)
-            return enclosure.getValue(identifier);
+        if (parent != null)
+            return parent.getValue(identifier);
 
         throw new RuntimeError(identifier, "Undefined variable '" + identifier.lexeme + "'.");
     }
@@ -35,8 +35,8 @@ public class Environment {
             return;
         }
 
-        if (enclosure != null) {
-            enclosure.setValue(identifier, value);
+        if (parent != null) {
+            parent.setValue(identifier, value);
             return;
         }
 
