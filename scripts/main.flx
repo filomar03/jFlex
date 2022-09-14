@@ -1,0 +1,10 @@
+for (var i = 0; i < 100; i = i + 1) {
+    if (i % 2 == 0) {
+        print i;
+    }
+    //var i = 0; when this line is not commented the second if is always false,
+    //due to the implementation of for loops that doesn't have it's own backend
+    if (i % 2 != 0) {
+        print "dispari";
+    }
+}

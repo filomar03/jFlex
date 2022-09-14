@@ -75,7 +75,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.expr);
         environment.setValue(expr.identifier, value);
-        System.out.println(environment.getValue(expr.identifier));
         return value;
     }
 
