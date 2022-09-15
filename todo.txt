@@ -1,9 +1,6 @@
 NOW:
 review all errors messages thrown by flex
 think of a better name for declaration() function in Parser.java (should still remind that is a stmt, since statement() function should parse a littler group of statements)
-fix loops
- - one env when entering loop (declaration included)
- - only one block as statement
 
 END STAGES OF DEV:
 implement arrays

@@ -25,8 +25,9 @@ public class GenerateAst {
                 "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
                 "While      : Expr condition, Stmt body",
                 "Print      : Expr value",
+                "Expression : Expr expr",
                 "Block      : List<Stmt> statements",
-                "Expression : Expr expr"
+                "Break      : "
         ));
     }
 
@@ -68,7 +69,10 @@ public class GenerateAst {
     private static void defineSubclass(String className, String baseName, String fieldList, PrintWriter writer) {
         writer.println("\tstatic class " + className + " extends " + baseName + " {");
 
-        String[] fields = fieldList.split(", ");
+        String[] fields = new String[0];
+        if (!fieldList.isEmpty()) {
+            fields = fieldList.split(", ");
+        }
         for (String field : fields)
             writer.println("\t\tfinal " + field + ";");
 

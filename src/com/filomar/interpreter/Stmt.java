@@ -8,8 +8,9 @@ abstract class Stmt {
 		R visitIfStmt(If stmt);
 		R visitWhileStmt(While stmt);
 		R visitPrintStmt(Print stmt);
-		R visitBlockStmt(Block stmt);
 		R visitExpressionStmt(Expression stmt);
+		R visitBlockStmt(Block stmt);
+		R visitBreakStmt(Break stmt);
 	}
 
 	abstract <R> R accept(Visitor<R> visitor);
@@ -74,6 +75,19 @@ abstract class Stmt {
 		}
 	}
 
+	static class Expression extends Stmt {
+		final Expr expr;
+
+		Expression(Expr expr) {
+			this.expr = expr;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitExpressionStmt(this);
+		}
+	}
+
 	static class Block extends Stmt {
 		final List<Stmt> statements;
 
@@ -87,16 +101,14 @@ abstract class Stmt {
 		}
 	}
 
-	static class Expression extends Stmt {
-		final Expr expr;
+	static class Break extends Stmt {
 
-		Expression(Expr expr) {
-			this.expr = expr;
+		Break() {
 		}
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitExpressionStmt(this);
+			return visitor.visitBreakStmt(this);
 		}
 	}
 

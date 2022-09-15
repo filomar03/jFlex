@@ -14,6 +14,8 @@ public class Parser {
     private final List<Token> tokens;
     private int current = 0;
 
+    private int loopDepth = 0;
+
     Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
@@ -24,7 +26,7 @@ public class Parser {
             statements.add(declaration());
         }
 
-        return statements;
+            return statements;
     }
 
     //statement parsing
@@ -52,6 +54,7 @@ public class Parser {
             if (match(FOR)) return forStmt();
             if (match(PRINT)) return printStmt();
             if (match(LEFT_BRACE)) return new Stmt.Block(stmtCollector());
+            if (match(BREAK)) return breakStmt();
             return expressionStmt();
         } catch (ParseError error) {
             synchronize();
@@ -78,9 +81,14 @@ public class Parser {
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expected ')'.");
 
-        Stmt body = statement();
+        try {
+            loopDepth++;
+            Stmt body = statement();
 
-        return new Stmt.While(condition, body);
+            return new Stmt.While(condition, body);
+        } finally {
+            loopDepth--;
+        }
     }
 
     private Stmt forStmt() {
@@ -107,31 +115,42 @@ public class Parser {
             consume(RIGHT_PAREN, "Expected ')'.");
         }
 
-        Stmt body = statement();
+        try {
+            loopDepth++;
+            Stmt body = statement();
 
-        if (increment != null) { //add elements of body not itself to avoid creating a nested block stmt
-            body = new Stmt.Block(Arrays.asList(
-                    body,
-                    new Stmt.Expression(increment)
-            ));
+            if (increment != null) { //add elements of body not itself to avoid creating a nested block stmt
+                body = new Stmt.Block(Arrays.asList(
+                        body,
+                        new Stmt.Expression(increment)
+                ));
+            }
+
+            body = new Stmt.While((condition != null ? condition : new Expr.Literal(true)), body);
+
+            if (initializer != null) {
+                body = new Stmt.Block(Arrays.asList(
+                        initializer,
+                        body
+                ));
+            }
+
+            return body;
+        } finally {
+            loopDepth--;
         }
-
-        body = new Stmt.While((condition != null ? condition : new Expr.Literal(true)), body);
-
-        if (initializer != null) {
-            body = new Stmt.Block(Arrays.asList(
-                    initializer,
-                    body
-            ));
-        }
-
-        return body;
     }
 
     private Stmt printStmt() {
         Expr value = expression();
         consume(SEMICOLON, "Expected ';' at the end of the statement found '" + current().lexeme + "' instead.");
         return new Stmt.Print(value);
+    }
+
+    private Stmt expressionStmt() {
+        Expr expr = expression();
+        consume(SEMICOLON, "Expected ';' at the end of the statement, found '" + current().lexeme + "' instead.");
+        return new Stmt.Expression(expr);
     }
 
     private List<Stmt> stmtCollector() {
@@ -145,10 +164,13 @@ public class Parser {
         return statements;
     }
 
-    private Stmt expressionStmt() {
-        Expr expr = expression();
-        consume(SEMICOLON, "Expected ';' at the end of the statement, found '" + current().lexeme + "' instead.");
-        return new Stmt.Expression(expr);
+    private Stmt breakStmt() {
+        if (loopDepth == 0) {
+            throw error(current(), "Cannot use break outside a loop");
+        }
+
+        consume(SEMICOLON, "expected semicolon after break");
+        return new Stmt.Break();
     }
 
     //Top down expression parsing
@@ -276,6 +298,7 @@ public class Parser {
         return new ParseError();
     }
 
+    //generates a lot of shitty useless errors
     private void synchronize() { //EOF safe
         if (!isAtEnd())
             advance();
