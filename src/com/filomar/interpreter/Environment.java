@@ -40,6 +40,6 @@ public class Environment {
             return;
         }
 
-        throw new RuntimeError(identifier, "Undefined variable '" + identifier.lexeme + "'.");
+        throw new RuntimeError(identifier, "Undefined variable " + identifier.lexeme + "'.");
     }
 }

@@ -138,7 +138,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return stringify(left) + stringify(right);
                 }
 
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
+                throw new RuntimeError(expr.operator, "Expected operands to be number or string.");
             }
             case GREATER -> {
                 if (left instanceof Double && right instanceof Double) {
@@ -149,7 +149,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return ((String) left).length() > ((String) right).length();
                 }
 
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
+                throw new RuntimeError(expr.operator, "Expected both operands to be number or string.");
             }
             case GREATER_EQUAL -> {
                 if (left instanceof Double && right instanceof Double) {
@@ -160,7 +160,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return ((String) left).length() >= ((String) right).length();
                 }
 
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
+                throw new RuntimeError(expr.operator, "Expected both operands to be number or string.");
             }
             case LESS -> {
                 if (left instanceof Double && right instanceof Double) {
@@ -171,7 +171,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return ((String) left).length() < ((String) right).length();
                 }
 
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
+                throw new RuntimeError(expr.operator, "Expected both operands to be number or string.");
             }
             case LESS_EQUAL -> {
                 if (left instanceof Double && right instanceof Double) {
@@ -182,7 +182,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return ((String) left).length() <= ((String) right).length();
                 }
 
-                throw new RuntimeError(expr.operator, "Operator '" + expr.operator.lexeme + "' expected numbers or strings.");
+                throw new RuntimeError(expr.operator, "Expected both operands to be number or string.");
             }
             case BANG_EQUAL -> {
                 return !isEqual(left, right);
@@ -244,7 +244,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private void checkNumericOperand(Token operator, Object ... operands) {
         for (Object operand : operands) {
-            if (!(operand instanceof Double)) throw new RuntimeError(operator, "Operator '" + operator.lexeme + "' expected numbers.");
+            if (!(operand instanceof Double)) throw new RuntimeError(operator, "Expected all operands to be number.");
         }
     }
 

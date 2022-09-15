@@ -1,8 +1,7 @@
 NOW:
-review all errors messages thrown by flex
-think of a better name for declaration() function in Parser.java (should still remind that is a stmt, since statement() function should parse a littler group of statements)
 
 END STAGES OF DEV:
+add lambda functions
 implement arrays
 networking support
 print as a function  instead of statement

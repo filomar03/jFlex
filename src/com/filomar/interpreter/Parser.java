@@ -36,14 +36,14 @@ public class Parser {
     }
 
     private Stmt varDclStmt() {
-        Token identifier = consume(IDENTIFIER, "Expected variable name after definition, found '" + current().lexeme + "' instead.");
+        Token identifier = consume(IDENTIFIER, "Expected an identifier next to 'var', found '" + current().lexeme + "' instead.");
 
         Expr initializer = new Expr.Literal(null);
         if (match(EQUAL)) {
             initializer = expression();
         }
 
-        consume(SEMICOLON, "Expected ';' at the end of the statement, found '" + current().lexeme + "' instead.");
+        consume(SEMICOLON, "Expected ';' at the end of a statement, found '" + current().lexeme + "' instead.");
         return new Stmt.VarDcl(identifier, initializer);
     }
 
@@ -63,9 +63,9 @@ public class Parser {
     }
 
     private Stmt ifStmt() {
-        consume(LEFT_PAREN, "Expected '('.");
+        consume(LEFT_PAREN, "Expected '(' next to 'if', found '" + current().lexeme + "' instead.");
         Expr condition = expression();
-        consume(RIGHT_PAREN, "Expected ')'.");
+        consume(RIGHT_PAREN, "Expected ')' to wrap 'if' condition, found '" + current().lexeme + "' instead.");
 
         Stmt thenBranch = statement();
         Stmt elseBranch = null;
@@ -77,9 +77,9 @@ public class Parser {
     }
 
     private Stmt whileStmt() {
-        consume(LEFT_PAREN, "Expected '('.");
+        consume(LEFT_PAREN, "Expected '(' next to 'while', found '" + current().lexeme + "' instead.");
         Expr condition = expression();
-        consume(RIGHT_PAREN, "Expected ')'.");
+        consume(RIGHT_PAREN, "Expected '(' to wrap 'while' condition, found '" + current().lexeme + "' instead.");
 
         try {
             loopDepth++;
@@ -92,7 +92,7 @@ public class Parser {
     }
 
     private Stmt forStmt() {
-        consume(LEFT_PAREN, "Expected '('.");
+        consume(LEFT_PAREN, "Expected '(' next to 'for', found '" + current().lexeme + "' instead.");
 
         Stmt initializer;
         if (match(SEMICOLON)) {
@@ -106,20 +106,20 @@ public class Parser {
         Expr condition = null;
         if (!match(SEMICOLON)) {
             condition = expression();
-            consume(SEMICOLON, "Expected ';' after initializer");
+            consume(SEMICOLON, "Expected ';' at then end of an expression, found '" + current().lexeme + "' instead.");
         }
 
         Expr increment = null;
         if (!match(RIGHT_PAREN)) {
             increment = expression();
-            consume(RIGHT_PAREN, "Expected ')'.");
+            consume(RIGHT_PAREN, "Expected ')' to wrap 'for' declaration, found '" + current().lexeme + "' instead.");
         }
 
         try {
             loopDepth++;
             Stmt body = statement();
 
-            if (increment != null) { //add elements of body not itself to avoid creating a nested block stmt
+            if (increment != null) {
                 body = new Stmt.Block(Arrays.asList(
                         body,
                         new Stmt.Expression(increment)
@@ -143,13 +143,13 @@ public class Parser {
 
     private Stmt printStmt() {
         Expr value = expression();
-        consume(SEMICOLON, "Expected ';' at the end of the statement found '" + current().lexeme + "' instead.");
+        consume(SEMICOLON, "Expected ';' at the end of a statement found '" + current().lexeme + "' instead.");
         return new Stmt.Print(value);
     }
 
     private Stmt expressionStmt() {
         Expr expr = expression();
-        consume(SEMICOLON, "Expected ';' at the end of the statement, found '" + current().lexeme + "' instead.");
+        consume(SEMICOLON, "Expected ';' at the end of a statement, found '" + current().lexeme + "' instead.");
         return new Stmt.Expression(expr);
     }
 
@@ -160,16 +160,16 @@ public class Parser {
             statements.add(declaration());
         }
 
-        consume(RIGHT_BRACE, "Expected '}' at the end of the block statement, found '" + current().lexeme + "' instead.");
+        consume(RIGHT_BRACE, "Expected '}' at the end of a block statement, found '" + current().lexeme + "' instead.");
         return statements;
     }
 
     private Stmt breakStmt() {
         if (loopDepth == 0) {
-            throw error(current(), "Cannot use break outside a loop");
+            throw error(current(), "Cannot use 'break' outside a loop.");
         }
 
-        consume(SEMICOLON, "expected semicolon after break");
+        consume(SEMICOLON, "Expected ';' at the end of a statement, found '" + current().lexeme + "' instead.");
         return new Stmt.Break();
     }
 
@@ -285,11 +285,11 @@ public class Parser {
         if (match(IDENTIFIER)) return new Expr.Variable(previous());
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
-            consume(RIGHT_PAREN, "Expected ')', found '" + current().lexeme + "' instead.");
+            consume(RIGHT_PAREN, "Expected ')' to close an expression wrapped in parentheses, found '" + current().lexeme + "' instead.");
             return new Expr.Grouping(expr);
         }
 
-        throw error(current(), "Expected an expression, found '" + current().lexeme + "' instead.");
+        throw error(current(), "Expected a primary expression token, found '" + current().lexeme + "' instead.");
     }
 
     //Error reporting and recovery

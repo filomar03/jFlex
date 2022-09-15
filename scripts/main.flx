@@ -1,7 +1,1 @@
-for (var i = 0; ; i = i + 1) {
-    if (i == 50) {
-        break;
-        break;
-    }
-    print i;
-}
+print 21 > "ciao";
