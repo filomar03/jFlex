@@ -9,10 +9,13 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class Flex {
+    //Fields
     private static final Interpreter interpreter = new Interpreter();
     static boolean hadError = false;
     static boolean hadRuntimeError = false;
 
+    //Methods
+    //--Main
     public static void main(String[] args) throws IOException {
         if (args.length == 0)
             runPrompt();
@@ -24,6 +27,7 @@ public class Flex {
         }
     }
 
+    //--Run target program
     private static void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
@@ -56,6 +60,7 @@ public class Flex {
         interpreter.interpret(statements);
     }
 
+    //--Error handling
     static void onErrorDetected(int line, int column, String message) {
         notifyError(line, column, message);
         hadError = true;

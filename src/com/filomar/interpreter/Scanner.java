@@ -8,6 +8,7 @@ import java.util.Map;
 import static com.filomar.interpreter.TokenType.*;
 
 public class Scanner {
+    //Fields
     private final String source;
     private final List<Token> tokens = new ArrayList<>();
     private int start = 0;
@@ -15,6 +16,8 @@ public class Scanner {
     private int line = 1;
     private int column = 0;
     private static final Map<String, TokenType> keywords;
+
+    //Static blocks
     static {
         keywords = new HashMap<>();
         keywords.put("and", AND);
@@ -36,10 +39,13 @@ public class Scanner {
         keywords.put("while", WHILE);
     }
 
+    //Constructors
     Scanner(String source) {
         this.source = source;
     }
 
+    //Methods
+    //--Scanning
     List<Token> scanTokens() {
         while (!isAtEnd()) {
             start = next;
@@ -65,12 +71,12 @@ public class Scanner {
             case '%' -> addToken(MODULUS);
             case '+' -> addToken(PLUS);
             case '/' -> {
-                if (match('/')) lineCommentHandler();
-                else if (match('*')) blockCommentHandler();
+                if (match('/')) lineCommentHelper();
+                else if (match('*')) blockCommentHelper();
                 else addToken(SLASH);
             }
             case '*' -> {
-                if (match('/')) reportError("Closing an non opened comment block.");
+                if (match('/')) reportError("Closing an unopened comment block");
                 else addToken(STAR);
             }
             case ' ', '\t', '\r', '\n' -> {} //ignore blanks, managed by advance()
@@ -78,16 +84,16 @@ public class Scanner {
             case '=' -> addToken(match('=') ? EQUAL_EQUAL : EQUAL);
             case '>' -> addToken(match('=') ? GREATER_EQUAL : GREATER);
             case '<' -> addToken(match('=') ? LESS_EQUAL : LESS);
-            case '"' -> stringLiteralHandler();
+            case '"' -> stringLiteralHelper();
             default -> {
-                if (isDigit(c)) numberLiteralHandler();
-                else if (isAlpha(c)) identifierHandler();
-                else reportError("Unexpected character '" + c +  "'.");
+                if (isDigit(c)) numberLiteralHelper();
+                else if (isAlpha(c)) identifierHelper();
+                else reportError("Unexpected character '" + c +  "'");
             }
         }
     }
 
-    //Error reporting
+    //--Error reporting
     private void reportError(String message) {
         Flex.onErrorDetected(line, column, message);
     }
@@ -96,7 +102,7 @@ public class Scanner {
         Flex.onErrorDetected(line, column, message);
     }
 
-    //Type checking
+    //--Type checking
     private boolean isDigit(char c) {
         return c >= '0' && c <= '9';
     }
@@ -111,21 +117,21 @@ public class Scanner {
         return isAlpha(c) || isDigit(c);
     }
 
-    //Complex tokens handlers
-    private void stringLiteralHandler() {
+    //--Complex token helpers
+    private void stringLiteralHelper() {
         int stringStartLine = line;
         int stringStartColumn = column;
 
         while (!isAtEnd() && peek() != '"') advance();
 
-        if (isAtEnd()) reportError(stringStartLine, stringStartColumn, "Unterminated string.");
+        if (isAtEnd()) reportError(stringStartLine, stringStartColumn, "Unterminated string");
         else {
             advance();
             addToken(STRING, source.substring(start + 1, next - 1));
         }
     }
 
-    private void numberLiteralHandler() {
+    private void numberLiteralHelper() {
         while (isDigit(peek())) advance();
 
         if (peek() == '.' && isDigit(peek(2))) advance(2);
@@ -135,7 +141,7 @@ public class Scanner {
         addToken(NUMBER, Double.parseDouble(source.substring(start, next)));
     }
 
-    private void identifierHandler() {
+    private void identifierHelper() {
         while (isAlphaNumeric(peek())) advance();
 
         String text = source.substring(start, next);
@@ -144,23 +150,23 @@ public class Scanner {
         addToken(type);
     }
 
-    //Comments handlers
-    private void lineCommentHandler() {
+    //--Comment helpers
+    private void lineCommentHelper() {
         while (!isAtEnd())
             if (advance() == '\n') return;
     }
 
-    private void blockCommentHandler() {
+    private void blockCommentHelper() {
         int blockStartLine = line;
         int blockStartColumn = column - 1;
 
         while (!isAtEnd())
             if (advance() == '*' && match('/')) return;
 
-        reportError(blockStartLine, blockStartColumn, "Unclosed comment block.");
+        reportError(blockStartLine, blockStartColumn, "Unclosed comment block");
     }
 
-    //Source management
+    //--Source manipulation
     private boolean isAtEnd(int steps) { //call to ensure EOF safety
         return next + steps - 1 >= source.length();
     }
@@ -200,7 +206,7 @@ public class Scanner {
         return !isAtEnd() && peek() == expected && advance() == expected;
     }
 
-    //Token list management
+    //--Token list management
     private void addToken(TokenType type, Object literal) {
         String lexeme = source.substring(start, next);
         tokens.add(new Token(type, lexeme, literal, line, column - lexeme.length() + 1));

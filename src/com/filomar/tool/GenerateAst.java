@@ -12,20 +12,22 @@ public class GenerateAst {
             System.exit(64);
         }
         defineAst(args[0], "com.filomar.interpreter", "Expr", Arrays.asList(
-                "Assign   : Token identifier, Expr expr",
-                "Logical  : Expr left, Token op, Expr right", //introduced a new class for logical operations to allow short-circuiting without modifying Binary class code
+                "Assign   : Token identifier, Expr expression",
+                "Logical  : Expr left, Token operator, Expr right", //introduced a new class for logical operations to allow short-circuiting without modifying Binary class code
                 "Binary   : Expr left, Token operator, Expr right",
-                "Unary    : Token operator, Expr expr",
+                "Unary    : Token operator, Expr expression",
+                "Call     : Expr callee, Token paren, List<Expr> arguments",
                 "Literal  : Object value",
                 "Variable : Token identifier",
-                "Grouping : Expr expr"
+                "Grouping : Expr expression"
                 ));
         defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
                 "VarDcl     : Token identifier, Expr initializer",
+                "FunDcl     : Token identifier, List<Token> parameters, List<Stmt> body",
                 "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
                 "While      : Expr condition, Stmt body",
                 "Print      : Expr value",
-                "Expression : Expr expr",
+                "Expression : Expr expression",
                 "Block      : List<Stmt> statements",
                 "Break      : "
         ));

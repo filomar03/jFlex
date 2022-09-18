@@ -1,1 +1,1 @@
-print 21 > "ciao";
+print clock();

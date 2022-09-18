@@ -1,4 +1,5 @@
 NOW:
+move classes into 2 separate packages, fronted and backend
 
 END STAGES OF DEV:
 add lambda functions

@@ -1,12 +1,37 @@
 package com.filomar.interpreter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+    //Nested classes
     private static class BreakException extends RuntimeException {}
 
-    private Environment environment = new Environment();
+    //Fields
+    final Environment globals = new Environment();
+    private Environment environment = globals;
 
+    //Constructors
+    Interpreter() {
+        globals.createBinding("clock", new FlexCallable() {
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                return (double) System.currentTimeMillis();
+            }
+
+            @Override
+            public String toString() {
+                return "<native fun>";
+            }
+        });
+    }
+
+    //Methods
     void interpret(List<Stmt> statements) {
         try {
             for (Stmt statement : statements) {
@@ -17,14 +42,31 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
     }
 
-    //Statement execution
+    void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment previous = this.environment;
+        try {
+            this.environment = environment;
+            for (Stmt stmt : statements) {
+                execute(stmt);
+            }
+        } catch (RuntimeError error) {
+            Flex.onRuntimeError(error);
+        }
+        this.environment = previous;
+    }
+
     private void execute(Stmt stmt) {
         stmt.accept(this);
     }
 
     @Override
     public Void visitVarDclStmt(Stmt.VarDcl stmt) {
-        environment.newBinding(stmt.identifier.lexeme, evaluate(stmt.initializer));
+        environment.createBinding(stmt.identifier.lexeme, evaluate(stmt.initializer));
+        return null;
+    }
+
+    @Override
+    public Void visitFunDclStmt(Stmt.FunDcl stmt) {
         return null;
     }
 
@@ -57,18 +99,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
-        evaluate(stmt.expr);
+        evaluate(stmt.expression);
         return null;
     }
 
     @Override
     public Void visitBlockStmt(Stmt.Block block) {
-        Environment outerEnv = this.environment;
-        this.environment = new Environment(outerEnv);
-
-        interpret(block.statements);
-
-        this.environment = outerEnv;
+        executeBlock(block.statements, new Environment(this.environment));
         return null;
     }
 
@@ -78,22 +115,22 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     //Expression evaluation
-    private Object evaluate(Expr expr) {
-        return expr.accept(this);
+    private Object evaluate(Expr expression) {
+        return expression.accept(this);
     }
 
     @Override
-    public Object visitAssignExpr(Expr.Assign expr) {
-        Object value = evaluate(expr.expr);
-        environment.setValue(expr.identifier, value);
+    public Object visitAssignExpr(Expr.Assign expression) {
+        Object value = evaluate(expression.expression);
+        environment.setBinding(expression.identifier, value);
         return value;
     }
 
     @Override
-    public Object visitLogicalExpr(Expr.Logical expr) {
-        Object left = evaluate(expr.left);
+    public Object visitLogicalExpr(Expr.Logical expression) {
+        Object left = evaluate(expression.left);
 
-        switch (expr.op.type) { //DIY short-circuiting even if java operators already have it
+        switch (expression.operator.type) { //DIY short-circuiting even if java operators already have it
             case AND -> {
                 if (!isTruth(left))
                     return left;
@@ -104,29 +141,29 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             }
         }
 
-        return evaluate(expr.right);
+        return evaluate(expression.right);
     }
 
     @Override
-    public Object visitBinaryExpr(Expr.Binary expr) {
-        Object left = evaluate(expr.left);
-        Object right = evaluate(expr.right);
+    public Object visitBinaryExpr(Expr.Binary expression) {
+        Object left = evaluate(expression.left);
+        Object right = evaluate(expression.right);
 
-        switch (expr.operator.type) {
+        switch (expression.operator.type) {
             case SLASH -> {
-                checkNumericOperand(expr.operator, left, right);
+                checkNumericOperand(expression.operator, left, right);
                 return (double) left / (double) right;
             }
             case STAR -> {
-                checkNumericOperand(expr.operator, left, right);
+                checkNumericOperand(expression.operator, left, right);
                 return (double) left * (double) right;
             }
             case MODULUS -> {
-                checkNumericOperand(expr.operator, left, right);
+                checkNumericOperand(expression.operator, left, right);
                 return (double) left % (double) right;
             }
             case MINUS -> {
-                checkNumericOperand(expr.operator, left, right);
+                checkNumericOperand(expression.operator, left, right);
                 return (double) left - (double) right;
             }
             case PLUS -> {
@@ -138,7 +175,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return stringify(left) + stringify(right);
                 }
 
-                throw new RuntimeError(expr.operator, "Expected operands to be number or string.");
+                throw new RuntimeError(expression.operator, "Expected operands to be number or string.");
             }
             case GREATER -> {
                 if (left instanceof Double && right instanceof Double) {
@@ -149,7 +186,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return ((String) left).length() > ((String) right).length();
                 }
 
-                throw new RuntimeError(expr.operator, "Expected both operands to be number or string.");
+                throw new RuntimeError(expression.operator, "Expected both operands to be number or string");
             }
             case GREATER_EQUAL -> {
                 if (left instanceof Double && right instanceof Double) {
@@ -160,7 +197,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return ((String) left).length() >= ((String) right).length();
                 }
 
-                throw new RuntimeError(expr.operator, "Expected both operands to be number or string.");
+                throw new RuntimeError(expression.operator, "Expected both operands to be number or string");
             }
             case LESS -> {
                 if (left instanceof Double && right instanceof Double) {
@@ -171,7 +208,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return ((String) left).length() < ((String) right).length();
                 }
 
-                throw new RuntimeError(expr.operator, "Expected both operands to be number or string.");
+                throw new RuntimeError(expression.operator, "Expected both operands to be number or string");
             }
             case LESS_EQUAL -> {
                 if (left instanceof Double && right instanceof Double) {
@@ -182,7 +219,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return ((String) left).length() <= ((String) right).length();
                 }
 
-                throw new RuntimeError(expr.operator, "Expected both operands to be number or string.");
+                throw new RuntimeError(expression.operator, "Expected both operands to be number or string");
             }
             case BANG_EQUAL -> {
                 return !isEqual(left, right);
@@ -196,15 +233,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Object visitUnaryExpr(Expr.Unary expr) {
-        Object right = evaluate(expr.expr);
+    public Object visitUnaryExpr(Expr.Unary expression) {
+        Object right = evaluate(expression.expression);
 
-        switch (expr.operator.type) {
+        switch (expression.operator.type) {
             case BANG -> {
                 return !isTruth(right);
             }
             case MINUS -> {
-                checkNumericOperand(expr.operator, right);
+                checkNumericOperand(expression.operator, right);
                 return -(Double) right;
             }
         }
@@ -213,18 +250,38 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Object visitLiteralExpr(Expr.Literal expr) {
-        return expr.value;
+    public Object visitCallExpr(Expr.Call expression) {
+        Object callee = evaluate(expression.callee);
+
+        List<Object> args = new ArrayList<>();
+        for (Expr arg : expression.arguments) {
+            args.add(evaluate(arg));
+        }
+
+        if (!(callee instanceof FlexCallable function)) {
+            throw new RuntimeError(expression.paren, "Callee cannot be called, only function and classes can be called");
+        }
+
+        if (args.size() != function.arity()) {
+            throw new RuntimeError(expression.paren, "Expected " + function.arity() + "arguments, found " + args.size() + "");
+        }
+
+        return function.call(this, args);
     }
 
     @Override
-    public Object visitVariableExpr(Expr.Variable expr) {
-        return environment.getValue(expr.identifier);
+    public Object visitLiteralExpr(Expr.Literal expression) {
+        return expression.value;
     }
 
     @Override
-    public Object visitGroupingExpr(Expr.Grouping expr) {
-        return evaluate(expr.expr);
+    public Object visitVariableExpr(Expr.Variable expression) {
+        return environment.getBinding(expression.identifier);
+    }
+
+    @Override
+    public Object visitGroupingExpr(Expr.Grouping expression) {
+        return evaluate(expression.expression);
     }
 
     //Utility methods

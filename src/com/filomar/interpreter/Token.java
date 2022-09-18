@@ -1,6 +1,6 @@
 package com.filomar.interpreter;
 
-public class Token {
+public class Token { //update to a record
     final TokenType type;
     final String lexeme;
     final Object literal;
@@ -13,16 +13,5 @@ public class Token {
         this.literal = literal;
         this.line = line;
         this.column = column;
-    }
-
-    @Override
-    public String toString() {
-        return "Token{" +
-                "type=" + type +
-                ", lexeme='" + lexeme + '\'' +
-                ", literal=" + literal +
-                ", line=" + line +
-                ", column=" + column +
-                '}';
     }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 abstract class Stmt {
 	interface Visitor<R> {
 		R visitVarDclStmt(VarDcl stmt);
+		R visitFunDclStmt(FunDcl stmt);
 		R visitIfStmt(If stmt);
 		R visitWhileStmt(While stmt);
 		R visitPrintStmt(Print stmt);
@@ -27,6 +28,23 @@ abstract class Stmt {
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitVarDclStmt(this);
+		}
+	}
+
+	static class FunDcl extends Stmt {
+		final Token identifier;
+		final List<Token> parameters;
+		final List<Stmt> body;
+
+		FunDcl(Token identifier, List<Token> parameters, List<Stmt> body) {
+			this.identifier = identifier;
+			this.parameters = parameters;
+			this.body = body;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitFunDclStmt(this);
 		}
 	}
 
@@ -76,10 +94,10 @@ abstract class Stmt {
 	}
 
 	static class Expression extends Stmt {
-		final Expr expr;
+		final Expr expression;
 
-		Expression(Expr expr) {
-			this.expr = expr;
+		Expression(Expr expression) {
+			this.expression = expression;
 		}
 
 		@Override

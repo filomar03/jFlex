@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Environment {
+    //Fields
     private final Environment parent;
     private final Map<String, Object> bindings = new HashMap<>();
 
+    //Constructors
     Environment() {
         parent = null;
     }
@@ -15,31 +17,32 @@ public class Environment {
         this.parent = enclosure;
     }
 
-    void newBinding(String name, Object value) {
+    //Methods
+    void createBinding(String name, Object value) {
         bindings.put(name, value);
     }
 
-    Object getValue(Token identifier) {
+    Object getBinding(Token identifier) {
         if (bindings.containsKey(identifier.lexeme))
             return bindings.get(identifier.lexeme);
 
         if (parent != null)
-            return parent.getValue(identifier);
+            return parent.getBinding(identifier);
 
-        throw new RuntimeError(identifier, "Undefined variable '" + identifier.lexeme + "'.");
+        throw new RuntimeError(identifier, "Undefined binding '" + identifier.lexeme + "'.");
     }
 
-    void setValue(Token identifier, Object value) {
+    void setBinding(Token identifier, Object value) {
         if (bindings.containsKey(identifier.lexeme)) {
             bindings.put(identifier.lexeme, value);
             return;
         }
 
         if (parent != null) {
-            parent.setValue(identifier, value);
+            parent.setBinding(identifier, value);
             return;
         }
 
-        throw new RuntimeError(identifier, "Undefined variable " + identifier.lexeme + "'.");
+        throw new RuntimeError(identifier, "Undefined binding " + identifier.lexeme + "'.");
     }
 }

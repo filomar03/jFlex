@@ -1,59 +1,82 @@
 package com.filomar.interpreter;
 
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static com.filomar.interpreter.TokenType.*;
-import static java.util.Arrays.*;
 
 public class Parser {
+    //Nested classes
     private static class ParseError extends RuntimeException {}
 
+    //Fields
     private final List<Token> tokens;
     private int current = 0;
-
     private int loopDepth = 0;
 
+    //Constructors
     Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
 
+    //Methods
+    //--Parsing
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
             statements.add(declaration());
         }
-
-            return statements;
+        return statements;
     }
 
-    //statement parsing
+    //--Declarations parsing
     private Stmt declaration() {
         if (match(VAR)) return varDclStmt();
+        if (match(FUN)) return funDclStmt();
         return statement();
     }
 
     private Stmt varDclStmt() {
-        Token identifier = consume(IDENTIFIER, "Expected an identifier next to 'var', found '" + current().lexeme + "' instead.");
+        Token identifier = consume(IDENTIFIER, "Expected a valid variable name");
 
         Expr initializer = new Expr.Literal(null);
         if (match(EQUAL)) {
             initializer = expression();
         }
 
-        consume(SEMICOLON, "Expected ';' at the end of a statement, found '" + current().lexeme + "' instead.");
+        consume(SEMICOLON, "Expected ';' at the end of a statement");
         return new Stmt.VarDcl(identifier, initializer);
     }
 
+    private Stmt funDclStmt() {
+        Token identifier = consume(IDENTIFIER, "Expected a valid function/method name");
+        consume(LEFT_PAREN, "Expected '(' after function/method name");
+        List<Token> parameters = new ArrayList<>();
+        if (!match(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() < 255) {
+                    parameters.add(consume(IDENTIFIER, "Expected a valid parameter name"));
+                } else {
+                    throw error(current(), "Function/Method definitions cannot have more than 255 parameters");
+                }
+            } while (match(COMMA));
+            consume(RIGHT_PAREN, "Expected ')' after parameters");
+        }
+        consume(LEFT_BRACE, "Expect '{' before function/method body");
+        List<Stmt> body = blockCollector();
+
+        return new Stmt.FunDcl(identifier, parameters, body);
+    }
+
+    //--Statements parsing
     private Stmt statement() {
         try {
             if (match(IF)) return ifStmt();
             if (match(WHILE)) return whileStmt();
             if (match(FOR)) return forStmt();
             if (match(PRINT)) return printStmt();
-            if (match(LEFT_BRACE)) return new Stmt.Block(stmtCollector());
+            if (match(LEFT_BRACE)) return new Stmt.Block(blockCollector());
             if (match(BREAK)) return breakStmt();
             return expressionStmt();
         } catch (ParseError error) {
@@ -63,9 +86,9 @@ public class Parser {
     }
 
     private Stmt ifStmt() {
-        consume(LEFT_PAREN, "Expected '(' next to 'if', found '" + current().lexeme + "' instead.");
+        consume(LEFT_PAREN, "Expected '(' before condition");
         Expr condition = expression();
-        consume(RIGHT_PAREN, "Expected ')' to wrap 'if' condition, found '" + current().lexeme + "' instead.");
+        consume(RIGHT_PAREN, "Expected ')' after condition");
 
         Stmt thenBranch = statement();
         Stmt elseBranch = null;
@@ -77,9 +100,9 @@ public class Parser {
     }
 
     private Stmt whileStmt() {
-        consume(LEFT_PAREN, "Expected '(' next to 'while', found '" + current().lexeme + "' instead.");
+        consume(LEFT_PAREN, "Expected '(' before condition");
         Expr condition = expression();
-        consume(RIGHT_PAREN, "Expected '(' to wrap 'while' condition, found '" + current().lexeme + "' instead.");
+        consume(RIGHT_PAREN, "Expected ')' after condition");
 
         try {
             loopDepth++;
@@ -91,8 +114,8 @@ public class Parser {
         }
     }
 
-    private Stmt forStmt() {
-        consume(LEFT_PAREN, "Expected '(' next to 'for', found '" + current().lexeme + "' instead.");
+    private Stmt forStmt() { //Syntactic sugar, parsed as a 'WHILE' --> see scripts/for_issue.flx
+        consume(LEFT_PAREN, "Expected '(' before condition");
 
         Stmt initializer;
         if (match(SEMICOLON)) {
@@ -106,13 +129,13 @@ public class Parser {
         Expr condition = null;
         if (!match(SEMICOLON)) {
             condition = expression();
-            consume(SEMICOLON, "Expected ';' at then end of an expression, found '" + current().lexeme + "' instead.");
+            consume(SEMICOLON, "Expected ';' after condition");
         }
 
         Expr increment = null;
         if (!match(RIGHT_PAREN)) {
             increment = expression();
-            consume(RIGHT_PAREN, "Expected ')' to wrap 'for' declaration, found '" + current().lexeme + "' instead.");
+            consume(RIGHT_PAREN, "Expected ')' after update");
         }
 
         try {
@@ -143,24 +166,24 @@ public class Parser {
 
     private Stmt printStmt() {
         Expr value = expression();
-        consume(SEMICOLON, "Expected ';' at the end of a statement found '" + current().lexeme + "' instead.");
+        consume(SEMICOLON, "Expected ';' at the end of a statement");
         return new Stmt.Print(value);
     }
 
     private Stmt expressionStmt() {
         Expr expr = expression();
-        consume(SEMICOLON, "Expected ';' at the end of a statement, found '" + current().lexeme + "' instead.");
+        consume(SEMICOLON, "Expected ';' at the end of a statement");
         return new Stmt.Expression(expr);
     }
 
-    private List<Stmt> stmtCollector() {
+    private List<Stmt> blockCollector() {
         List<Stmt> statements = new ArrayList<>();
 
         while (current().type != RIGHT_BRACE && !isAtEnd()) {
             statements.add(declaration());
         }
 
-        consume(RIGHT_BRACE, "Expected '}' at the end of a block statement, found '" + current().lexeme + "' instead.");
+        consume(RIGHT_BRACE, "Expected '}' at the end of a block statement");
         return statements;
     }
 
@@ -169,11 +192,11 @@ public class Parser {
             throw error(current(), "Cannot use 'break' outside a loop.");
         }
 
-        consume(SEMICOLON, "Expected ';' at the end of a statement, found '" + current().lexeme + "' instead.");
+        consume(SEMICOLON, "Expected ';' at the end of a statement");
         return new Stmt.Break();
     }
 
-    //Top down expression parsing
+    //--Expression parsing (Top-down)
     private Expr expression() {
         return assignmentExpr();
     }
@@ -195,7 +218,7 @@ public class Parser {
         return expr;
     }
 
-    private Expr logicalOrExpr() { //separated in two methods to assure AND op has precedence over OR op
+    private Expr logicalOrExpr() {
         Expr expr = logicalAndExpr();
 
         if (match(OR)) {
@@ -274,7 +297,37 @@ public class Parser {
             return new Expr.Unary(op, expr);
         }
 
-        return primaryExpr();
+        return callExpr();
+    }
+
+    private Expr callExpr() {
+        Expr expr = primaryExpr();
+
+        while (true) {
+            if (match(LEFT_PAREN)) {
+                List<Expr> arguments = new ArrayList<>();
+                Token paren;
+                if (!match(RIGHT_PAREN)) {
+                    do {
+                        if (arguments.size() < 255) {
+                            arguments.add(expression());
+                        } else {
+                            throw error(current(), "Calls cannot have more than 255 arguments");
+                        }
+                    } while (match(COMMA));
+
+                    paren = consume(RIGHT_PAREN, "Expected ')' after arguments");
+                } else {
+                    paren = previous();
+                }
+
+                expr = new Expr.Call(expr, paren, arguments);
+            } else {
+                break;
+            }
+        }
+
+        return expr;
     }
 
     private Expr primaryExpr() {
@@ -285,21 +338,20 @@ public class Parser {
         if (match(IDENTIFIER)) return new Expr.Variable(previous());
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
-            consume(RIGHT_PAREN, "Expected ')' to close an expression wrapped in parentheses, found '" + current().lexeme + "' instead.");
+            consume(RIGHT_PAREN, "Expected ')' after the expression");
             return new Expr.Grouping(expr);
         }
 
-        throw error(current(), "Expected a primary expression token, found '" + current().lexeme + "' instead.");
+        throw error(current(), "Expected a primary expression");
     }
 
-    //Error reporting and recovery
+    //--Error reporting and recovery
     private ParseError error(Token token, String message) {
         Flex.onErrorDetected(token.line, token.column, message);
         return new ParseError();
     }
 
-    //generates a lot of shitty useless errors
-    private void synchronize() { //EOF safe
+    private void synchronize() { //not so useful right now, consider a revision in the future
         if (!isAtEnd())
             advance();
 
@@ -314,7 +366,7 @@ public class Parser {
         }
     }
 
-    //Token list management
+    //--Token list manipulation
     private Token consume(TokenType type, String message) throws ParseError { //EOF safe
         if (match(type)) return previous();
 

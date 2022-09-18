@@ -1,6 +1,6 @@
 package com.filomar.interpreter;
 
-public class AstPrinter implements Expr.Visitor<String> {
+public class AstPrinter implements Expr.Visitor<String> { //DEPRECATED class
     String stringify(Expr expr) {
         return expr.accept(this);
     }
@@ -22,12 +22,17 @@ public class AstPrinter implements Expr.Visitor<String> {
 
     @Override
     public String visitUnaryExpr(Expr.Unary expr) {
-        return "(" + expr.operator.lexeme + " " + expr.expr.accept(this) + ")";
+        return "(" + expr.operator.lexeme + " " + expr.expression.accept(this) + ")";
+    }
+
+    @Override
+    public String visitCallExpr(Expr.Call expr) { //not implemented
+        return null;
     }
 
     @Override
     public String visitGroupingExpr(Expr.Grouping expr) {
-        return "grp" + expr.expr.accept(this);
+        return "grp" + expr.expression.accept(this);
     }
 
     @Override
@@ -39,7 +44,4 @@ public class AstPrinter implements Expr.Visitor<String> {
     public String visitVariableExpr(Expr.Variable expr) { //not implemented
         return null;
     }
-
-    //class created to test program, before parser
-    //deprecated and not complete
 }

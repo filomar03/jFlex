@@ -8,6 +8,7 @@ abstract class Expr {
 		R visitLogicalExpr(Logical expr);
 		R visitBinaryExpr(Binary expr);
 		R visitUnaryExpr(Unary expr);
+		R visitCallExpr(Call expr);
 		R visitLiteralExpr(Literal expr);
 		R visitVariableExpr(Variable expr);
 		R visitGroupingExpr(Grouping expr);
@@ -17,11 +18,11 @@ abstract class Expr {
 
 	static class Assign extends Expr {
 		final Token identifier;
-		final Expr expr;
+		final Expr expression;
 
-		Assign(Token identifier, Expr expr) {
+		Assign(Token identifier, Expr expression) {
 			this.identifier = identifier;
-			this.expr = expr;
+			this.expression = expression;
 		}
 
 		@Override
@@ -32,12 +33,12 @@ abstract class Expr {
 
 	static class Logical extends Expr {
 		final Expr left;
-		final Token op;
+		final Token operator;
 		final Expr right;
 
-		Logical(Expr left, Token op, Expr right) {
+		Logical(Expr left, Token operator, Expr right) {
 			this.left = left;
-			this.op = op;
+			this.operator = operator;
 			this.right = right;
 		}
 
@@ -66,16 +67,33 @@ abstract class Expr {
 
 	static class Unary extends Expr {
 		final Token operator;
-		final Expr expr;
+		final Expr expression;
 
-		Unary(Token operator, Expr expr) {
+		Unary(Token operator, Expr expression) {
 			this.operator = operator;
-			this.expr = expr;
+			this.expression = expression;
 		}
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitUnaryExpr(this);
+		}
+	}
+
+	static class Call extends Expr {
+		final Expr callee;
+		final Token paren;
+		final List<Expr> arguments;
+
+		Call(Expr callee, Token paren, List<Expr> arguments) {
+			this.callee = callee;
+			this.paren = paren;
+			this.arguments = arguments;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitCallExpr(this);
 		}
 	}
 
@@ -106,10 +124,10 @@ abstract class Expr {
 	}
 
 	static class Grouping extends Expr {
-		final Expr expr;
+		final Expr expression;
 
-		Grouping(Expr expr) {
-			this.expr = expr;
+		Grouping(Expr expression) {
+			this.expression = expression;
 		}
 
 		@Override
