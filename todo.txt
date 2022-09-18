@@ -2,10 +2,8 @@ NOW:
 
 END STAGES OF DEV:
 add lambda functions
-implement arrays
+implement lists, tuples and dictionaries
 networking support
 print as a function  instead of statement
 prototypes
-determine which error in scanner should be fatal (stop program execution) and which not
 implement different type of assignments
-static checking for variables accessing without prior definition (not at runtime)
