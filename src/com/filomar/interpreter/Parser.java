@@ -32,21 +32,9 @@ public class Parser {
 
     //--Declarations parsing
     private Stmt declaration() {
-        if (match(VAR)) return varDclStmt();
         if (match(FUN)) return funDclStmt();
+        if (match(VAR)) return varDclStmt();
         return statement();
-    }
-
-    private Stmt varDclStmt() {
-        Token identifier = consume(IDENTIFIER, "Expected a valid variable name");
-
-        Expr initializer = new Expr.Literal(null);
-        if (match(EQUAL)) {
-            initializer = expression();
-        }
-
-        consume(SEMICOLON, "Expected ';' at the end of a statement");
-        return new Stmt.VarDcl(identifier, initializer);
     }
 
     private Stmt funDclStmt() {
@@ -69,15 +57,28 @@ public class Parser {
         return new Stmt.FunDcl(identifier, parameters, body);
     }
 
+    private Stmt varDclStmt() {
+        Token identifier = consume(IDENTIFIER, "Expected a valid variable name");
+
+        Expr initializer = new Expr.Literal(null);
+        if (match(EQUAL)) {
+            initializer = expression();
+        }
+
+        consume(SEMICOLON, "Expected ';' at the end of a statement");
+        return new Stmt.VarDcl(identifier, initializer);
+    }
+
     //--Statements parsing
     private Stmt statement() {
         try {
-            if (match(IF)) return ifStmt();
-            if (match(WHILE)) return whileStmt();
-            if (match(FOR)) return forStmt();
-            if (match(PRINT)) return printStmt();
             if (match(LEFT_BRACE)) return new Stmt.Block(blockCollector());
             if (match(BREAK)) return breakStmt();
+            if (match(FOR)) return forStmt();
+            if (match(IF)) return ifStmt();
+            if (match(PRINT)) return printStmt();
+            if (match(RETURN)) return returnStmt();
+            if (match(WHILE)) return whileStmt();
             return expressionStmt();
         } catch (ParseError error) {
             synchronize();
@@ -85,33 +86,24 @@ public class Parser {
         }
     }
 
-    private Stmt ifStmt() {
-        consume(LEFT_PAREN, "Expected '(' before condition");
-        Expr condition = expression();
-        consume(RIGHT_PAREN, "Expected ')' after condition");
+    private List<Stmt> blockCollector() {
+        List<Stmt> statements = new ArrayList<>();
 
-        Stmt thenBranch = statement();
-        Stmt elseBranch = null;
-        if (match(ELSE)) {
-            elseBranch = statement();
+        while (current().type != RIGHT_BRACE && !isAtEnd()) {
+            statements.add(declaration());
         }
 
-        return new Stmt.If(condition, thenBranch, elseBranch);
+        consume(RIGHT_BRACE, "Expected '}' at the end of a block statement");
+        return statements;
     }
 
-    private Stmt whileStmt() {
-        consume(LEFT_PAREN, "Expected '(' before condition");
-        Expr condition = expression();
-        consume(RIGHT_PAREN, "Expected ')' after condition");
-
-        try {
-            loopDepth++;
-            Stmt body = statement();
-
-            return new Stmt.While(condition, body);
-        } finally {
-            loopDepth--;
+    private Stmt breakStmt() {
+        if (loopDepth == 0) {
+            throw error(current(), "Cannot use 'break' outside a loop.");
         }
+
+        consume(SEMICOLON, "Expected ';' at the end of a statement");
+        return new Stmt.Break();
     }
 
     private Stmt forStmt() { //Syntactic sugar, parsed as a 'WHILE' --> see scripts/for_issue.flx
@@ -164,36 +156,55 @@ public class Parser {
         }
     }
 
+    private Stmt ifStmt() {
+        consume(LEFT_PAREN, "Expected '(' before condition");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expected ')' after condition");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(ELSE)) {
+            elseBranch = statement();
+        }
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
+    }
+
     private Stmt printStmt() {
         Expr value = expression();
         consume(SEMICOLON, "Expected ';' at the end of a statement");
         return new Stmt.Print(value);
     }
 
+    private Stmt returnStmt() {
+        Expr value = new Expr.Literal(null);
+        if (!match(SEMICOLON)) {
+            value = expression();
+            consume(SEMICOLON, "Expected ';' at the end of a statement");
+        }
+
+        return new Stmt.Return(value);
+    }
+
+    private Stmt whileStmt() {
+        consume(LEFT_PAREN, "Expected '(' before condition");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expected ')' after condition");
+
+        try {
+            loopDepth++;
+            Stmt body = statement();
+
+            return new Stmt.While(condition, body);
+        } finally {
+            loopDepth--;
+        }
+    }
+
     private Stmt expressionStmt() {
         Expr expr = expression();
         consume(SEMICOLON, "Expected ';' at the end of a statement");
         return new Stmt.Expression(expr);
-    }
-
-    private List<Stmt> blockCollector() {
-        List<Stmt> statements = new ArrayList<>();
-
-        while (current().type != RIGHT_BRACE && !isAtEnd()) {
-            statements.add(declaration());
-        }
-
-        consume(RIGHT_BRACE, "Expected '}' at the end of a block statement");
-        return statements;
-    }
-
-    private Stmt breakStmt() {
-        if (loopDepth == 0) {
-            throw error(current(), "Cannot use 'break' outside a loop.");
-        }
-
-        consume(SEMICOLON, "Expected ';' at the end of a statement");
-        return new Stmt.Break();
     }
 
     //--Expression parsing (Top-down)

@@ -5,7 +5,18 @@ import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     //Nested classes
-    private static class BreakException extends RuntimeException {}
+    private static class BreakEx extends RuntimeException {}
+    private static class ReturnEx extends RuntimeException {
+        final Object value;
+
+        ReturnEx(Object value) {
+            this.value = value;
+        }
+
+        Object getValue() {
+            return value;
+        }
+    }
 
     //Fields
     final Environment globals = new Environment();
@@ -26,12 +37,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
             @Override
             public String toString() {
-                return "<native fun>";
+                return "<native clock fun>";
             }
         });
     }
 
     //Methods
+    //--Statements executions
     void interpret(List<Stmt> statements) {
         try {
             for (Stmt statement : statements) {
@@ -59,15 +71,30 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         stmt.accept(this);
     }
 
+    //--Visitor pattern declarations interpretation
+    @Override
+    public Void visitFunDclStmt(Stmt.FunDcl stmt) {
+        LoxFunction function = new LoxFunction(stmt);
+        environment.createBinding(stmt.identifier.lexeme, function);
+        return null;
+    }
+
     @Override
     public Void visitVarDclStmt(Stmt.VarDcl stmt) {
         environment.createBinding(stmt.identifier.lexeme, evaluate(stmt.initializer));
         return null;
     }
 
+    //--Visitor pattern statements interpretation
     @Override
-    public Void visitFunDclStmt(Stmt.FunDcl stmt) {
+    public Void visitBlockStmt(Stmt.Block block) {
+        executeBlock(block.statements, new Environment(this.environment));
         return null;
+    }
+
+    @Override
+    public Void visitBreakStmt(Stmt.Break stmt) {
+        throw new BreakEx();
     }
 
     @Override
@@ -80,20 +107,26 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Void visitWhileStmt(Stmt.While stmt) {
-        while (isTruth(evaluate(stmt.condition))) {
-            try {
-                execute(stmt.body);
-            } catch (BreakException ex) {
-                return null;
-            }
-        }
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        System.out.println(stringify(evaluate(stmt.value)));
         return null;
     }
 
     @Override
-    public Void visitPrintStmt(Stmt.Print stmt) {
-        System.out.println(stringify(evaluate(stmt.value)));
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = evaluate(stmt.value);
+        throw new ReturnEx(value);
+    }
+
+    @Override
+    public Void visitWhileStmt(Stmt.While stmt) {
+        while (isTruth(evaluate(stmt.condition))) {
+            try {
+                execute(stmt.body);
+            } catch (BreakEx ex) {
+                return null;
+            }
+        }
         return null;
     }
 
@@ -103,18 +136,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
-    @Override
-    public Void visitBlockStmt(Stmt.Block block) {
-        executeBlock(block.statements, new Environment(this.environment));
-        return null;
-    }
-
-    @Override
-    public Void visitBreakStmt(Stmt.Break stmt) {
-        throw new BreakException();
-    }
-
-    //Expression evaluation
+    //--Visitor pattern expressions evaluation
     private Object evaluate(Expr expression) {
         return expression.accept(this);
     }
@@ -263,10 +285,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
 
         if (args.size() != function.arity()) {
-            throw new RuntimeError(expression.paren, "Expected " + function.arity() + "arguments, found " + args.size() + "");
+            throw new RuntimeError(expression.paren, "Expected " + function.arity() + " argument/s, found " + args.size() + "");
         }
 
-        return function.call(this, args);
+        try {
+            function.call(this, args);
+        } catch (ReturnEx returnEx) {
+            return returnEx.value;
+        }
+
+        return null;
     }
 
     @Override
@@ -284,7 +312,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return evaluate(expression.expression);
     }
 
-    //Utility methods
+    //--Utilities
     private boolean isTruth(Object obj) {
         if (obj instanceof Boolean) return (boolean) obj;
         if (obj instanceof Double) return (double) obj != 0;

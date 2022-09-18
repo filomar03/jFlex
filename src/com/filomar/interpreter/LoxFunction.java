@@ -23,4 +23,9 @@ public class LoxFunction implements FlexCallable{
         interpreter.executeBlock(declaration.body, environment);
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "<" + declaration.identifier.lexeme + " fun>";
+    }
 }

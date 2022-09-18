@@ -22,15 +22,18 @@ public class GenerateAst {
                 "Grouping : Expr expression"
                 ));
         defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
-                "VarDcl     : Token identifier, Expr initializer",
+                //low-priority statements (aka: declarations)
                 "FunDcl     : Token identifier, List<Token> parameters, List<Stmt> body",
-                "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
-                "While      : Expr condition, Stmt body",
-                "Print      : Expr value",
-                "Expression : Expr expression",
+                "VarDcl     : Token identifier, Expr initializer",
+                //high-priority statements (aka: statements)
                 "Block      : List<Stmt> statements",
-                "Break      : "
-        ));
+                "Break      : ",
+                "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
+                "Print      : Expr value",
+                "Return     : Expr value",
+                "While      : Expr condition, Stmt body",
+                "Expression : Expr expression"
+                ));
     }
 
     private static void defineAst(String outputDir, String packageName, String baseClass, List<String> subclasses) throws IOException {

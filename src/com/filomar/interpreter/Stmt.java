@@ -4,32 +4,18 @@ import java.util.List;
 
 abstract class Stmt {
 	interface Visitor<R> {
-		R visitVarDclStmt(VarDcl stmt);
 		R visitFunDclStmt(FunDcl stmt);
-		R visitIfStmt(If stmt);
-		R visitWhileStmt(While stmt);
-		R visitPrintStmt(Print stmt);
-		R visitExpressionStmt(Expression stmt);
+		R visitVarDclStmt(VarDcl stmt);
 		R visitBlockStmt(Block stmt);
 		R visitBreakStmt(Break stmt);
+		R visitIfStmt(If stmt);
+		R visitPrintStmt(Print stmt);
+		R visitReturnStmt(Return stmt);
+		R visitWhileStmt(While stmt);
+		R visitExpressionStmt(Expression stmt);
 	}
 
 	abstract <R> R accept(Visitor<R> visitor);
-
-	static class VarDcl extends Stmt {
-		final Token identifier;
-		final Expr initializer;
-
-		VarDcl(Token identifier, Expr initializer) {
-			this.identifier = identifier;
-			this.initializer = initializer;
-		}
-
-		@Override
-		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitVarDclStmt(this);
-		}
-	}
 
 	static class FunDcl extends Stmt {
 		final Token identifier;
@@ -48,61 +34,18 @@ abstract class Stmt {
 		}
 	}
 
-	static class If extends Stmt {
-		final Expr condition;
-		final Stmt thenBranch;
-		final Stmt elseBranch;
+	static class VarDcl extends Stmt {
+		final Token identifier;
+		final Expr initializer;
 
-		If(Expr condition, Stmt thenBranch, Stmt elseBranch) {
-			this.condition = condition;
-			this.thenBranch = thenBranch;
-			this.elseBranch = elseBranch;
+		VarDcl(Token identifier, Expr initializer) {
+			this.identifier = identifier;
+			this.initializer = initializer;
 		}
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitIfStmt(this);
-		}
-	}
-
-	static class While extends Stmt {
-		final Expr condition;
-		final Stmt body;
-
-		While(Expr condition, Stmt body) {
-			this.condition = condition;
-			this.body = body;
-		}
-
-		@Override
-		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitWhileStmt(this);
-		}
-	}
-
-	static class Print extends Stmt {
-		final Expr value;
-
-		Print(Expr value) {
-			this.value = value;
-		}
-
-		@Override
-		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitPrintStmt(this);
-		}
-	}
-
-	static class Expression extends Stmt {
-		final Expr expression;
-
-		Expression(Expr expression) {
-			this.expression = expression;
-		}
-
-		@Override
-		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitExpressionStmt(this);
+			return visitor.visitVarDclStmt(this);
 		}
 	}
 
@@ -127,6 +70,77 @@ abstract class Stmt {
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitBreakStmt(this);
+		}
+	}
+
+	static class If extends Stmt {
+		final Expr condition;
+		final Stmt thenBranch;
+		final Stmt elseBranch;
+
+		If(Expr condition, Stmt thenBranch, Stmt elseBranch) {
+			this.condition = condition;
+			this.thenBranch = thenBranch;
+			this.elseBranch = elseBranch;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitIfStmt(this);
+		}
+	}
+
+	static class Print extends Stmt {
+		final Expr value;
+
+		Print(Expr value) {
+			this.value = value;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitPrintStmt(this);
+		}
+	}
+
+	static class Return extends Stmt {
+		final Expr value;
+
+		Return(Expr value) {
+			this.value = value;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitReturnStmt(this);
+		}
+	}
+
+	static class While extends Stmt {
+		final Expr condition;
+		final Stmt body;
+
+		While(Expr condition, Stmt body) {
+			this.condition = condition;
+			this.body = body;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitWhileStmt(this);
+		}
+	}
+
+	static class Expression extends Stmt {
+		final Expr expression;
+
+		Expression(Expr expression) {
+			this.expression = expression;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitExpressionStmt(this);
 		}
 	}
 
