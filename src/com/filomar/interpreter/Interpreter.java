@@ -20,7 +20,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     //Fields
     final Environment globals = new Environment();
-    private Environment environment = globals;
+    protected Environment environment = globals;
 
     //Constructors
     Interpreter() {
@@ -74,7 +74,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     //--Visitor pattern declarations interpretation
     @Override
     public Void visitFunDclStmt(Stmt.FunDcl stmt) {
-        LoxFunction function = new LoxFunction(stmt);
+        FlexFunction function = new FlexFunction(stmt);
         environment.createBinding(stmt.identifier.lexeme, function);
         return null;
     }

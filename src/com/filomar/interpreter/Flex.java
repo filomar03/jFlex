@@ -74,4 +74,10 @@ public class Flex {
     private static void notifyError(int line, int column, String message) {
         System.err.println("[" + line + ":" + column + "] ERROR: " + message);
     }
+
+    //Debug utility
+    static AstPrinter astPrinter = new AstPrinter(interpreter);
+    public static AstPrinter debugAstPrinter() {
+        return astPrinter;
+    }
 }

@@ -2,10 +2,10 @@ package com.filomar.interpreter;
 
 import java.util.List;
 
-public class LoxFunction implements FlexCallable{
+public class FlexFunction implements FlexCallable{
     private final Stmt.FunDcl declaration;
 
-    LoxFunction(Stmt.FunDcl declaration) {
+    FlexFunction(Stmt.FunDcl declaration) {
         this.declaration = declaration;
     }
 

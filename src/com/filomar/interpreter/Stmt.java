@@ -114,6 +114,11 @@ abstract class Stmt {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitReturnStmt(this);
 		}
+
+		@Override
+		public String toString() {
+			return "return " + Flex.debugAstPrinter().stringify(value);
+		}
 	}
 
 	static class While extends Stmt {
