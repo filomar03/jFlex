@@ -63,8 +63,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             }
         } catch (RuntimeError error) {
             Flex.onRuntimeError(error);
+        } finally {
+            this.environment = previous;
         }
-        this.environment = previous;
     }
 
     private void execute(Stmt stmt) {
@@ -197,7 +198,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return stringify(left) + stringify(right);
                 }
 
-                throw new RuntimeError(expression.operator, "Expected operands to be number or string.");
+                throw new RuntimeError(expression.operator, "Expected operands to be number or string");
             }
             case GREATER -> {
                 if (left instanceof Double && right instanceof Double) {
@@ -285,16 +286,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
 
         if (args.size() != function.arity()) {
-            throw new RuntimeError(expression.paren, "Expected " + function.arity() + " argument/s, found " + args.size() + "");
+            throw new RuntimeError(expression.paren, "Expected " + function.arity() + " argument/s, found " + args.size());
         }
 
         try {
-            function.call(this, args);
+            return function.call(this, args);
         } catch (ReturnEx returnEx) {
             return returnEx.value;
         }
-
-        return null;
     }
 
     @Override
@@ -329,7 +328,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private void checkNumericOperand(Token operator, Object ... operands) {
         for (Object operand : operands) {
-            if (!(operand instanceof Double)) throw new RuntimeError(operator, "Expected all operands to be number.");
+            if (!(operand instanceof Double)) throw new RuntimeError(operator, "Expected all operands to be number");
         }
     }
 

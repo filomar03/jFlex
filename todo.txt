@@ -1,5 +1,6 @@
 NOW:
 move classes into 2 separate packages, fronted and backend
+convert token class into a record
 
 END STAGES OF DEV:
 add lambda functions

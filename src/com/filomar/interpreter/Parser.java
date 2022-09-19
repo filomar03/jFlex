@@ -106,7 +106,7 @@ public class Parser {
         return new Stmt.Break();
     }
 
-    private Stmt forStmt() { //Syntactic sugar, parsed as a 'WHILE' --> see scripts/for_issue.flx
+    private Stmt forStmt() { //Syntactic sugar, parsed as a 'WHILE' --> see scripts/for_loop_issue.flx
         consume(LEFT_PAREN, "Expected '(' before condition");
 
         Stmt initializer;
