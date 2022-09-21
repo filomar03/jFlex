@@ -12,10 +12,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         ReturnEx(Object value) {
             this.value = value;
         }
-
-        Object getValue() {
-            return value;
-        }
     }
 
     //Fields
