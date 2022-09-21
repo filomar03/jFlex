@@ -75,7 +75,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     //--Visitor pattern declarations interpretation
     @Override
     public Void visitFunDclStmt(Stmt.FunDcl stmt) {
-        FlexFunction function = new FlexFunction(stmt);
+        FlexFunction function = new FlexFunction(stmt, environment);
         environment.createBinding(stmt.identifier.lexeme, function);
         return null;
     }
