@@ -12,22 +12,22 @@ public class AstPrinter implements Expr.Visitor<String> {
 
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
-        return expr.identifier.lexeme + " = " + expr.expression.accept(this);
+        return expr.identifier.lexeme() + " = " + expr.expression.accept(this);
     }
 
     @Override
     public String visitLogicalExpr(Expr.Logical expr) {
-        return expr.left.accept(this) + " " + expr.operator.lexeme + " " + expr.right.accept(this);
+        return expr.left.accept(this) + " " + expr.operator.lexeme() + " " + expr.right.accept(this);
     }
 
     @Override
     public String visitBinaryExpr(Expr.Binary expr) {
-        return expr.left.accept(this) + " " + expr.operator.lexeme + " " + expr.right.accept(this);
+        return expr.left.accept(this) + " " + expr.operator.lexeme() + " " + expr.right.accept(this);
     }
 
     @Override
     public String visitUnaryExpr(Expr.Unary expr) {
-        return expr.operator.lexeme + expr.expression.accept(this);
+        return expr.operator.lexeme() + expr.expression.accept(this);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class AstPrinter implements Expr.Visitor<String> {
     @Override
     public String visitVariableExpr(Expr.Variable expr) {
         StringBuilder builder = new StringBuilder();
-        builder.append(expr.identifier.lexeme);
+        builder.append(expr.identifier.lexeme());
         try {
             Object callee = interpreter.environment.getBinding(expr.identifier);
             if (!(callee instanceof FlexCallable)) {

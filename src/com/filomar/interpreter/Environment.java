@@ -18,23 +18,26 @@ public class Environment {
     }
 
     //Methods
-    void createBinding(String name, Object value) {
-        bindings.put(name, value);
+    void createBinding(Token identifier, Object value) {
+        if (bindings.containsKey(identifier.lexeme()))
+            throw new RuntimeError(identifier, "This binding already exists");
+
+        bindings.put(identifier.lexeme(), value);
     }
 
     Object getBinding(Token identifier) {
-        if (bindings.containsKey(identifier.lexeme))
-            return bindings.get(identifier.lexeme);
+        if (bindings.containsKey(identifier.lexeme()))
+            return bindings.get(identifier.lexeme());
 
         if (parent != null)
             return parent.getBinding(identifier);
 
-        throw new RuntimeError(identifier, "Undefined binding '" + identifier.lexeme + "'.");
+        throw new RuntimeError(identifier, "Undefined binding '" + identifier.lexeme() + "'.");
     }
 
     void setBinding(Token identifier, Object value) {
-        if (bindings.containsKey(identifier.lexeme)) {
-            bindings.put(identifier.lexeme, value);
+        if (bindings.containsKey(identifier.lexeme())) {
+            bindings.put(identifier.lexeme(), value);
             return;
         }
 
@@ -43,6 +46,6 @@ public class Environment {
             return;
         }
 
-        throw new RuntimeError(identifier, "Undefined binding " + identifier.lexeme + "'.");
+        throw new RuntimeError(identifier, "Undefined binding " + identifier.lexeme() + "'.");
     }
 }

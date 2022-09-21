@@ -3,6 +3,8 @@ package com.filomar.interpreter;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.filomar.interpreter.TokenType.IDENTIFIER;
+
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     //Nested classes
     private static class BreakEx extends RuntimeException {}
@@ -20,7 +22,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     //Constructors
     Interpreter() {
-        globals.createBinding("clock", new FlexCallable() {
+        globals.createBinding(new Token(IDENTIFIER, "clock", null, 0, 0), new FlexCallable() {
             @Override
             public int arity() {
                 return 0;
@@ -72,13 +74,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitFunDclStmt(Stmt.FunDcl stmt) {
         FlexFunction function = new FlexFunction(stmt, environment);
-        environment.createBinding(stmt.identifier.lexeme, function);
+        environment.createBinding(stmt.identifier, function);
         return null;
     }
 
     @Override
     public Void visitVarDclStmt(Stmt.VarDcl stmt) {
-        environment.createBinding(stmt.identifier.lexeme, evaluate(stmt.initializer));
+        environment.createBinding(stmt.identifier, evaluate(stmt.initializer));
         return null;
     }
 
@@ -149,7 +151,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitLogicalExpr(Expr.Logical expression) {
         Object left = evaluate(expression.left);
 
-        switch (expression.operator.type) { //DIY short-circuiting even if java operators already have it
+        switch (expression.operator.type()) { //DIY short-circuiting even if java operators already have it
             case AND -> {
                 if (!isTruth(left))
                     return left;
@@ -168,21 +170,21 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object left = evaluate(expression.left);
         Object right = evaluate(expression.right);
 
-        switch (expression.operator.type) {
+        switch (expression.operator.type()) {
             case SLASH -> {
-                checkNumericOperand(expression.operator, left, right);
+                checkNumericOperand(expression.operator, "All operands must be numbers", left, right);
                 return (double) left / (double) right;
             }
             case STAR -> {
-                checkNumericOperand(expression.operator, left, right);
+                checkNumericOperand(expression.operator, "All operands must be numbers", left, right);
                 return (double) left * (double) right;
             }
             case MODULUS -> {
-                checkNumericOperand(expression.operator, left, right);
+                checkNumericOperand(expression.operator, "All operands must be numbers", left, right);
                 return (double) left % (double) right;
             }
             case MINUS -> {
-                checkNumericOperand(expression.operator, left, right);
+                checkNumericOperand(expression.operator, "All operands must be numbers", left, right);
                 return (double) left - (double) right;
             }
             case PLUS -> {
@@ -190,55 +192,47 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return (double) left + (double) right;
                 }
 
-                if (left instanceof String || right instanceof String) {
-                    return stringify(left) + stringify(right);
-                }
-
-                throw new RuntimeError(expression.operator, "Expected operands to be number or string");
+                return stringify(left) + stringify(right);
             }
             case GREATER -> {
-                if (left instanceof Double && right instanceof Double) {
-                    return (double) left > (double) right;
-                }
+                if (left instanceof String)
+                    left = (double) ((String) left).length();
 
-                if (left instanceof String && right instanceof String) {
-                    return ((String) left).length() > ((String) right).length();
-                }
+                if (right instanceof String)
+                    right = (double) ((String) right).length();
 
-                throw new RuntimeError(expression.operator, "Expected both operands to be number or string");
+                checkNumericOperand(expression.operator, "All operands must be numbers or strings", left, right);
+                return (double) left > (double) right;
             }
             case GREATER_EQUAL -> {
-                if (left instanceof Double && right instanceof Double) {
-                    return (double) left >= (double) right;
-                }
+                if (left instanceof String)
+                    left = (double) ((String) left).length();
 
-                if (left instanceof String && right instanceof String) {
-                    return ((String) left).length() >= ((String) right).length();
-                }
+                if (right instanceof String)
+                    right = (double) ((String) right).length();
 
-                throw new RuntimeError(expression.operator, "Expected both operands to be number or string");
+                checkNumericOperand(expression.operator, "All operands must be numbers or strings", left, right);
+                return (double) left >= (double) right;
             }
             case LESS -> {
-                if (left instanceof Double && right instanceof Double) {
-                    return (double) left < (double) right;
-                }
+                if (left instanceof String)
+                    left = (double) ((String) left).length();
 
-                if (left instanceof String && right instanceof String) {
-                    return ((String) left).length() < ((String) right).length();
-                }
+                if (right instanceof String)
+                    right = (double) ((String) right).length();
 
-                throw new RuntimeError(expression.operator, "Expected both operands to be number or string");
+                checkNumericOperand(expression.operator, "All operands must be numbers or strings", left, right);
+                return (double) left < (double) right;
             }
             case LESS_EQUAL -> {
-                if (left instanceof Double && right instanceof Double) {
-                    return (double) left <= (double) right;
-                }
+                if (left instanceof String)
+                    left = (double) ((String) left).length();
 
-                if (left instanceof String && right instanceof String) {
-                    return ((String) left).length() <= ((String) right).length();
-                }
+                if (right instanceof String)
+                    right = (double) ((String) right).length();
 
-                throw new RuntimeError(expression.operator, "Expected both operands to be number or string");
+                checkNumericOperand(expression.operator, "All operands must be numbers or strings", left, right);
+                return (double) left <= (double) right;
             }
             case BANG_EQUAL -> {
                 return !isEqual(left, right);
@@ -255,12 +249,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitUnaryExpr(Expr.Unary expression) {
         Object right = evaluate(expression.expression);
 
-        switch (expression.operator.type) {
+        switch (expression.operator.type()) {
             case BANG -> {
                 return !isTruth(right);
             }
             case MINUS -> {
-                checkNumericOperand(expression.operator, right);
+                checkNumericOperand(expression.operator, "All operands must be numbers", right);
                 return -(Double) right;
             }
         }
@@ -322,9 +316,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return a.equals(b);
     }
 
-    private void checkNumericOperand(Token operator, Object ... operands) {
+    private void checkNumericOperand(Token operator, String message, Object ... operands) {
         for (Object operand : operands) {
-            if (!(operand instanceof Double)) throw new RuntimeError(operator, "Expected all operands to be number");
+            if (!(operand instanceof Double)) throw new RuntimeError(operator, message);
         }
     }
 

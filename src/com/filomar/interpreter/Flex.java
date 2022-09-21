@@ -67,7 +67,7 @@ public class Flex {
     }
 
     static void onRuntimeError(RuntimeError error) {
-        notifyError(error.token.line, error.token.column, error.getMessage());
+        notifyError(error.token.line(), error.token.column(), error.getMessage());
         hadRuntimeError = true;
     }
 

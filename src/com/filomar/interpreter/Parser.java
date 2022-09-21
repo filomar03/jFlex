@@ -89,7 +89,7 @@ public class Parser {
     private List<Stmt> blockCollector() {
         List<Stmt> statements = new ArrayList<>();
 
-        while (current().type != RIGHT_BRACE && !isAtEnd()) {
+        while (current().type() != RIGHT_BRACE && !isAtEnd()) {
             statements.add(declaration());
         }
 
@@ -345,7 +345,7 @@ public class Parser {
         if (match(FALSE)) return new Expr.Literal(false);
         if (match(TRUE)) return new Expr.Literal(true);
         if (match(NULL)) return new Expr.Literal(null);
-        if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal);
+        if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal());
         if (match(IDENTIFIER)) return new Expr.Variable(previous());
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
@@ -358,7 +358,7 @@ public class Parser {
 
     //--Error reporting and recovery
     private ParseError error(Token token, String message) {
-        Flex.onErrorDetected(token.line, token.column, message);
+        Flex.onErrorDetected(token.line(), token.column(), message);
         return new ParseError();
     }
 
@@ -367,9 +367,9 @@ public class Parser {
             advance();
 
         while (!isAtEnd()) {
-            if (previous().type == SEMICOLON) return;
+            if (previous().type() == SEMICOLON) return;
 
-            switch (current().type) {
+            switch (current().type()) {
                 case CLASS, FUN, FOR, IF, PRINT, RETURN, VAR, WHILE -> { return; }
             }
 
@@ -387,7 +387,7 @@ public class Parser {
     private boolean match(TokenType... types) { //EOF safe
         if (isAtEnd()) return false;
         for (TokenType type : types) {
-            if (current().type == type) {
+            if (current().type() == type) {
                 advance();
                 return true;
             }
@@ -401,7 +401,7 @@ public class Parser {
     }
 
     private boolean isAtEnd() { //EOF safe
-        return current().type == EOF;
+        return current().type() == EOF;
     }
 
     private Token previous() { //not EOF safe

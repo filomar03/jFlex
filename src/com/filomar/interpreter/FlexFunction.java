@@ -20,7 +20,7 @@ public class FlexFunction implements FlexCallable{
     public Object call(Interpreter interpreter, List<Object> arguments) {
         Environment environment = new Environment(this.closure);
         for (int i = 0; i < declaration.parameters.size(); i++) {
-            environment.createBinding(declaration.parameters.get(i).lexeme, arguments.get(i));
+            environment.createBinding(declaration.parameters.get(i), arguments.get(i));
         }
         interpreter.executeBlock(declaration.body, environment);
         return null;
@@ -28,6 +28,6 @@ public class FlexFunction implements FlexCallable{
 
     @Override
     public String toString() {
-        return "<" + declaration.identifier.lexeme + " fun>";
+        return "<" + declaration.identifier.lexeme() + " fun>";
     }
 }

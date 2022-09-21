@@ -1,0 +1,5 @@
+fun prova(fn, a, b) {
+    print fn(a, b);
+}
+
+prova(fun ());
