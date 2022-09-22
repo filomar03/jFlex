@@ -1,12 +1,4 @@
 NOW:
-convert token class into a record
 implement anonymous functions
-
-
-END STAGES OF DEV:
-add lambda functions
-implement lists, tuples and dictionaries
-networking support
-print as a function  instead of statement
-prototypes
-implement different type of assignments
+add lists
+implement class for files and networking
