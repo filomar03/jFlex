@@ -4,8 +4,8 @@ import java.util.List;
 
 abstract class Stmt {
 	interface Visitor<R> {
-		R visitFunDclStmt(FunDcl stmt);
-		R visitVarDclStmt(VarDcl stmt);
+		R visitFunctionDclStmt(FunctionDcl stmt);
+		R visitVariableDclStmt(VariableDcl stmt);
 		R visitBlockStmt(Block stmt);
 		R visitBreakStmt(Break stmt);
 		R visitIfStmt(If stmt);
@@ -17,35 +17,33 @@ abstract class Stmt {
 
 	abstract <R> R accept(Visitor<R> visitor);
 
-	static class FunDcl extends Stmt {
+	static class FunctionDcl extends Stmt {
 		final Token identifier;
-		final List<Token> parameters;
-		final List<Stmt> body;
+		final Expr.Function function;
 
-		FunDcl(Token identifier, List<Token> parameters, List<Stmt> body) {
+		FunctionDcl(Token identifier, Expr.Function function) {
 			this.identifier = identifier;
-			this.parameters = parameters;
-			this.body = body;
+			this.function = function;
 		}
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitFunDclStmt(this);
+			return visitor.visitFunctionDclStmt(this);
 		}
 	}
 
-	static class VarDcl extends Stmt {
+	static class VariableDcl extends Stmt {
 		final Token identifier;
 		final Expr initializer;
 
-		VarDcl(Token identifier, Expr initializer) {
+		VariableDcl(Token identifier, Expr initializer) {
 			this.identifier = identifier;
 			this.initializer = initializer;
 		}
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitVarDclStmt(this);
+			return visitor.visitVariableDclStmt(this);
 		}
 	}
 
@@ -113,11 +111,6 @@ abstract class Stmt {
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitReturnStmt(this);
-		}
-
-		@Override
-		public String toString() {
-			return "return " + Flex.debugAstPrinter().stringify(value);
 		}
 	}
 

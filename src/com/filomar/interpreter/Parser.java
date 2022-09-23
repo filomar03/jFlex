@@ -32,21 +32,31 @@ public class Parser {
 
     //--Declarations parsing
     private Stmt declaration() {
-        if (match(FUN)) return funDclStmt();
+        if (check(current(), FUN) && check(next(), IDENTIFIER)) {
+            consume(FUN, "This error should never be thrown");
+            return functionDclStmt();
+        }
         if (match(VAR)) return varDclStmt();
         return statement();
     }
 
-    private Stmt funDclStmt() {
-        Token identifier = consume(IDENTIFIER, "Expected a valid function/method name");
-        consume(LEFT_PAREN, "Expected '(' after function/method name");
+    private Stmt functionDclStmt() {
+        Token identifier = consume(IDENTIFIER, "This error should never be thrown");
+
+        Expr.Function function = functionDefinition();
+
+        return new Stmt.FunctionDcl(identifier, function);
+    }
+
+    private Expr.Function functionDefinition() {
+        consume(LEFT_PAREN, "Expected '(' after function/method declaration");
         List<Token> parameters = new ArrayList<>();
         if (!match(RIGHT_PAREN)) {
             do {
                 if (parameters.size() < 255) {
                     parameters.add(consume(IDENTIFIER, "Expected a valid parameter name"));
                 } else {
-                    throw error(current(), "Function/Method definitions cannot have more than 255 parameters");
+                    throw error(current(), "Function/method definitions cannot have more than 255 parameters");
                 }
             } while (match(COMMA));
             consume(RIGHT_PAREN, "Expected ')' after parameters");
@@ -54,7 +64,7 @@ public class Parser {
         consume(LEFT_BRACE, "Expect '{' before function/method body");
         List<Stmt> body = blockCollector();
 
-        return new Stmt.FunDcl(identifier, parameters, body);
+        return new Expr.Function(parameters, body);
     }
 
     private Stmt varDclStmt() {
@@ -66,7 +76,7 @@ public class Parser {
         }
 
         consume(SEMICOLON, "Expected ';' at the end of a statement");
-        return new Stmt.VarDcl(identifier, initializer);
+        return new Stmt.VariableDcl(identifier, initializer);
     }
 
     //--Statements parsing
@@ -347,6 +357,7 @@ public class Parser {
         if (match(NULL)) return new Expr.Literal(null);
         if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal());
         if (match(IDENTIFIER)) return new Expr.Variable(previous());
+        if (match(FUN)) return functionDefinition();
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expected ')' after the expression");
@@ -387,12 +398,16 @@ public class Parser {
     private boolean match(TokenType... types) { //EOF safe
         if (isAtEnd()) return false;
         for (TokenType type : types) {
-            if (current().type() == type) {
+            if (check(current(), type)) {
                 advance();
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean check(Token token, TokenType type) {
+        return token.type() == type;
     }
 
     private Token advance() { //EOF safe
@@ -402,6 +417,11 @@ public class Parser {
 
     private boolean isAtEnd() { //EOF safe
         return current().type() == EOF;
+    }
+
+    private Token next() { //EOF safe
+        if (isAtEnd()) return current();
+        return tokens.get(current + 1);
     }
 
     private Token previous() { //not EOF safe

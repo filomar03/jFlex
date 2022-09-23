@@ -72,14 +72,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     //--Visitor pattern declarations interpretation
     @Override
-    public Void visitFunDclStmt(Stmt.FunDcl stmt) {
-        FlexFunction function = new FlexFunction(stmt, environment);
-        environment.createBinding(stmt.identifier, function);
+    public Void visitFunctionDclStmt(Stmt.FunctionDcl stmt) {
+        environment.createBinding(stmt.identifier, new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment));
         return null;
     }
 
     @Override
-    public Void visitVarDclStmt(Stmt.VarDcl stmt) {
+    public Void visitVariableDclStmt(Stmt.VariableDcl stmt) {
         environment.createBinding(stmt.identifier, evaluate(stmt.initializer));
         return null;
     }
@@ -284,6 +283,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         } catch (ReturnEx returnEx) {
             return returnEx.value;
         }
+    }
+
+    @Override
+    public Object visitFunctionExpr(Expr.Function expr) {
+        return new FlexFunction("(anonymous)", expr, environment);
     }
 
     @Override

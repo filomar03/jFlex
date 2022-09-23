@@ -17,22 +17,23 @@ public class GenerateAst {
                 "Binary   : Expr left, Token operator, Expr right",
                 "Unary    : Token operator, Expr expression",
                 "Call     : Expr callee, Token paren, List<Expr> arguments",
+                "Function : List<Token> parameters, List<Stmt> body",
                 "Literal  : Object value",
                 "Variable : Token identifier",
                 "Grouping : Expr expression"
                 ));
         defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
                 //low-priority statements (aka: declarations)
-                "FunDcl     : Token identifier, List<Token> parameters, List<Stmt> body",
-                "VarDcl     : Token identifier, Expr initializer",
+                "FunctionDcl : Token identifier, Expr.Function function",
+                "VariableDcl : Token identifier, Expr initializer",
                 //high-priority statements (aka: statements)
-                "Block      : List<Stmt> statements",
-                "Break      : ",
-                "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
-                "Print      : Expr value",
-                "Return     : Expr value",
-                "While      : Expr condition, Stmt body",
-                "Expression : Expr expression"
+                "Block       : List<Stmt> statements",
+                "Break       : ",
+                "If          : Expr condition, Stmt thenBranch, Stmt elseBranch",
+                "Print       : Expr value",
+                "Return      : Expr value",
+                "While       : Expr condition, Stmt body",
+                "Expression  : Expr expression"
                 ));
     }
 
