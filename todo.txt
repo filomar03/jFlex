@@ -1,4 +1,3 @@
 NOW:
-implement anonymous functions
-add lists
-implement class for files and networking
+implement lists
+implement class and methods for files, networking and strings
