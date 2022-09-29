@@ -3,16 +3,20 @@ package com.filomar.interpreter;
 import java.util.List;
 
 public class FlexFunction implements FlexCallable{
+    //Fields
     private final String name;
     private final Expr.Function declaration;
     private final Environment closure;
 
-    FlexFunction(String name, Expr.Function declaration, Environment environment) {
+    //Constructors
+    FlexFunction(String name, Expr.Function declaration, Environment closure) {
         this.name = name;
         this.declaration = declaration;
-        this.closure = environment;
+        this.closure = closure;
     }
 
+    //Methods
+    //--Function core methods
     @Override
     public int arity() {
         return declaration.parameters.size();
@@ -30,6 +34,6 @@ public class FlexFunction implements FlexCallable{
 
     @Override
     public String toString() {
-        return "<" + name + " fun>";
+        return "<fun> " + name;
     }
 }

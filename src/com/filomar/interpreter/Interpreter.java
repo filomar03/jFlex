@@ -35,7 +35,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
             @Override
             public String toString() {
-                return "<native clock fun>";
+                return "<native fun> clock";
             }
         });
     }
@@ -270,16 +270,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             args.add(evaluate(arg));
         }
 
-        if (!(callee instanceof FlexCallable function)) {
+        if (!(callee instanceof FlexCallable)) {
             throw new RuntimeError(expression.paren, "Callee cannot be called, only function and classes can be called");
         }
 
-        if (args.size() != function.arity()) {
-            throw new RuntimeError(expression.paren, "Expected " + function.arity() + " argument/s, found " + args.size());
+        if (args.size() != ((FlexCallable) callee).arity()) {
+            throw new RuntimeError(expression.paren, "Expected " + ((FlexCallable) callee).arity() + " argument/s, found " + args.size());
         }
 
         try {
-            return function.call(this, args);
+            return ((FlexFunction) callee).call(this, args);
         } catch (ReturnEx returnEx) {
             return returnEx.value;
         }

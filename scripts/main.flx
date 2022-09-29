@@ -1,6 +1,0 @@
-fun num_range(max, fn) {
-    for (var i = 0; i < max; i = i + 1)
-        fn(i);
-}
-
-num_range(100, fun (n) {print n;});

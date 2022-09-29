@@ -1,15 +1,31 @@
+/*
+    This class stringify AST nodes
+        Override toString() methods of Expr.class with these to gather useful string when using the debugger.
+        Example:
+            @Override
+            public String toString() {
+                return Flex.debugAstPrinter().stringify(this);
+            }
+*/
+
 package com.filomar.interpreter;
 
 public class AstPrinter implements Expr.Visitor<String> {
+    //Fields
     private final Interpreter interpreter;
+
+    //Constructors
     AstPrinter(Interpreter interpreter) {
         this.interpreter = interpreter;
     }
 
+    //Methods
+    //--Stringify AST node
     String stringify(Expr expr) {
         return expr.accept(this);
     }
 
+    //--Visitor pattern
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
         return expr.identifier.lexeme() + " = " + expr.expression.accept(this);
@@ -46,7 +62,7 @@ public class AstPrinter implements Expr.Visitor<String> {
 
     @Override
     public String visitFunctionExpr(Expr.Function expr) {
-        return null;
+        return "Function expression";
     }
 
     @Override
@@ -64,19 +80,18 @@ public class AstPrinter implements Expr.Visitor<String> {
     @Override
     public String visitVariableExpr(Expr.Variable expr) {
         StringBuilder builder = new StringBuilder();
-        builder.append(expr.identifier.lexeme());
         try {
-            Object callee = interpreter.environment.getBinding(expr.identifier);
-            if (!(callee instanceof FlexCallable)) {
+            Object binding = interpreter.environment.getBinding(expr.identifier);
+            if (binding instanceof FlexCallable function) {
+                builder.append(function);
+            } else {
+                builder.append(expr.identifier.lexeme());
                 builder.append("(");
-                try {
-                    builder.append(interpreter.environment.getBinding(expr.identifier));
-                } catch (RuntimeError error) {
-                    builder.append("?");
-                }
+                builder.append(binding);
                 builder.append(")");
+
             }
-        } catch (RuntimeError error) {}
+        } catch (RuntimeError ignored) {}
         return builder.toString();
     }
 

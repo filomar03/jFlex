@@ -18,10 +18,8 @@ public class Environment {
     }
 
     //Methods
+    //--Manage environment bindings
     void createBinding(Token identifier, Object value) {
-        if (bindings.containsKey(identifier.lexeme()))
-            throw new RuntimeError(identifier, "This binding already exists");
-
         bindings.put(identifier.lexeme(), value);
     }
 
