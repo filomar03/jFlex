@@ -57,12 +57,20 @@ public class Flex {
 
         if (hadError) return;
 
+        Resolver resolver = new Resolver(interpreter);
+        resolver.resolve(statements);
+
         interpreter.interpret(statements);
     }
 
     //--Error handling
     static void onErrorDetected(int line, int column, String message) {
         notifyError(line, column, message);
+        hadError = true;
+    }
+
+    static void onErrorDetected(Token token, String message) {
+        notifyError(token.line(), token.column(), message);
         hadError = true;
     }
 
@@ -76,7 +84,7 @@ public class Flex {
     }
 
     //Debug utility
-    static AstPrinter astPrinter = new AstPrinter(interpreter);
+    public static AstPrinter astPrinter = new AstPrinter(true);
     public static AstPrinter debugAstPrinter() {
         return astPrinter;
     }

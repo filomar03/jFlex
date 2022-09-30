@@ -21,7 +21,7 @@ public class Parser {
     }
 
     //Methods
-    //--Parsing
+    //--Parser core method
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
@@ -32,20 +32,23 @@ public class Parser {
 
     //--Declarations parsing
     private Stmt declaration() {
-        if (check(current(), FUN) && check(next(), IDENTIFIER)) {
-            consume(FUN, "This error should never be thrown");
-            return functionDclStmt();
+        try {
+            if (check(current(), FUN) && check(next(), IDENTIFIER)) {
+                consume(FUN, "This error should never be thrown");
+                return functionDclStmt();
+            }
+            if (match(VAR)) return varDclStmt();
+            return statement();
+        } catch (ParseError error) {
+            synchronize();
+            return null;
         }
-        if (match(VAR)) return varDclStmt();
-        return statement();
     }
 
     private Stmt functionDclStmt() {
         Token identifier = consume(IDENTIFIER, "This error should never be thrown");
 
-        Expr.Function function = functionDefinition();
-
-        return new Stmt.FunctionDcl(identifier, function);
+        return new Stmt.FunctionDcl(identifier, functionDefinition());
     }
 
     private Expr.Function functionDefinition() {
@@ -61,6 +64,7 @@ public class Parser {
             } while (match(COMMA));
             consume(RIGHT_PAREN, "Expected ')' after parameters");
         }
+
         consume(LEFT_BRACE, "Expect '{' before function/method body");
         List<Stmt> body = blockCollector();
 
@@ -70,39 +74,33 @@ public class Parser {
     private Stmt varDclStmt() {
         Token identifier = consume(IDENTIFIER, "Expected a valid variable name");
 
-        Expr initializer = new Expr.Literal(null);
+        Expr initializer = null;
         if (match(EQUAL)) {
             initializer = expression();
         }
 
         consume(SEMICOLON, "Expected ';' at the end of a statement");
+
         return new Stmt.VariableDcl(identifier, initializer);
     }
 
     //--Statements parsing
     private Stmt statement() {
-        try {
-            if (match(LEFT_BRACE)) return new Stmt.Block(blockCollector());
-            if (match(BREAK)) return breakStmt();
-            if (match(FOR)) return forStmt();
-            if (match(IF)) return ifStmt();
-            if (match(PRINT)) return printStmt();
-            if (match(RETURN)) return returnStmt();
-            if (match(WHILE)) return whileStmt();
-            return expressionStmt();
-        } catch (ParseError error) {
-            synchronize();
-            return null;
-        }
+        if (match(LEFT_BRACE)) return new Stmt.Block(blockCollector());
+        if (match(BREAK)) return breakStmt();
+        if (match(FOR)) return forStmt();
+        if (match(IF)) return ifStmt();
+        if (match(PRINT)) return printStmt();
+        if (match(RETURN)) return returnStmt();
+        if (match(WHILE)) return whileStmt();
+        return expressionStmt();
     }
 
     private List<Stmt> blockCollector() {
         List<Stmt> statements = new ArrayList<>();
-
         while (current().type() != RIGHT_BRACE && !isAtEnd()) {
             statements.add(declaration());
         }
-
         consume(RIGHT_BRACE, "Expected '}' at the end of a block statement");
         return statements;
     }
@@ -113,6 +111,7 @@ public class Parser {
         }
 
         consume(SEMICOLON, "Expected ';' at the end of a statement");
+
         return new Stmt.Break();
     }
 
@@ -187,12 +186,11 @@ public class Parser {
     }
 
     private Stmt returnStmt() {
-        Expr value = new Expr.Literal(null);
+        Expr value = null;
         if (!match(SEMICOLON)) {
             value = expression();
             consume(SEMICOLON, "Expected ';' at the end of a statement");
         }
-
         return new Stmt.Return(value);
     }
 
@@ -321,7 +319,7 @@ public class Parser {
         return callExpr();
     }
 
-    private Expr callExpr() {
+    private Expr callExpr() { //check if expr is a variable???
         Expr expr = primaryExpr();
 
         while (true) {
@@ -369,11 +367,11 @@ public class Parser {
 
     //--Error reporting and recovery
     private ParseError error(Token token, String message) {
-        Flex.onErrorDetected(token.line(), token.column(), message);
+        Flex.onErrorDetected(token, message);
         return new ParseError();
     }
 
-    private void synchronize() { //not so useful right now, consider a revision in the future
+    private void synchronize() { //reports a lot of weird errors
         if (!isAtEnd())
             advance();
 
@@ -406,7 +404,7 @@ public class Parser {
         return false;
     }
 
-    private boolean check(Token token, TokenType type) {
+    private boolean check(Token token, TokenType type) { //EOF safe
         return token.type() == type;
     }
 

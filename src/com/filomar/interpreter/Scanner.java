@@ -122,7 +122,7 @@ public class Scanner {
         int stringStartLine = line;
         int stringStartColumn = column;
 
-        while (!isAtEnd() && peek() != '"') advance();
+        while (!isAtEnd() && peek(1) != '"') advance();
 
         if (isAtEnd()) reportError(stringStartLine, stringStartColumn, "Unterminated string");
         else {
@@ -132,17 +132,17 @@ public class Scanner {
     }
 
     private void numberLiteralHelper() {
-        while (isDigit(peek())) advance();
+        while (isDigit(peek(1))) advance();
 
-        if (peek() == '.' && isDigit(peek(2))) advance(2);
+        if (peek(1) == '.' && isDigit(peek(2))) advance();
 
-        while (isDigit(peek())) advance();
+        while (isDigit(peek(1))) advance();
 
         addToken(NUMBER, Double.parseDouble(source.substring(start, next)));
     }
 
     private void identifierHelper() {
-        while (isAlphaNumeric(peek())) advance();
+        while (isAlphaNumeric(peek(1))) advance();
 
         String text = source.substring(start, next);
         TokenType type = keywords.get(text);
@@ -167,13 +167,9 @@ public class Scanner {
     }
 
     //--Source manipulation
-    private boolean isAtEnd(int steps) { //call to ensure EOF safety
-        return next + steps - 1 >= source.length();
-    }
-
-    private boolean isAtEnd() {
-        return isAtEnd(1);
-    }
+    private boolean isAtEnd() { //call to ensure EOF safety
+        return next >= source.length();
+    } //EOF safe
 
     private char advance() { //not EOF safe
         char c = source.charAt(next++);
@@ -185,25 +181,13 @@ public class Scanner {
         return c;
     }
 
-    private char advance(int steps) { //not EOF safe
-        if (steps > 1)
-            for (int i = 1; i < steps; i++)
-                advance();
-
-        return advance();
-    }
-
     private char peek(int steps) { //EOF safe
-        if (isAtEnd(steps)) return '\0';
+        if (next + steps - 1 >= source.length()) return '\0';
         return source.charAt(next + steps - 1);
     }
 
-    private char peek() {
-        return peek(1);
-    }
-
     private boolean match(char expected) { //EOF safe
-        return !isAtEnd() && peek() == expected && advance() == expected;
+        return !isAtEnd() && peek(1) == expected && advance() == expected;
     }
 
     //--Token list management

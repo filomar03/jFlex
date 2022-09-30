@@ -1,6 +1,6 @@
 /*
     This class stringify AST nodes
-        Override toString() methods of Expr.class with these to gather useful string when using the debugger.
+        Override toString() methods of Expr.class and Stmt.class with these to gather useful string when using the debugger.
         Example:
             @Override
             public String toString() {
@@ -10,25 +10,29 @@
 
 package com.filomar.interpreter;
 
-public class AstPrinter implements Expr.Visitor<String> {
+public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     //Fields
-    private final Interpreter interpreter;
+    private final boolean concise;
 
     //Constructors
-    AstPrinter(Interpreter interpreter) {
-        this.interpreter = interpreter;
+    public AstPrinter(boolean concise) {
+        this.concise = concise;
     }
 
     //Methods
-    //--Stringify AST node
+    //--Visitor pattern type matching
     String stringify(Expr expr) {
         return expr.accept(this);
     }
 
-    //--Visitor pattern
+    String stringify(Stmt stmt) {
+        return stmt.accept(this);
+    }
+
+    //--Visitor pattern implementations
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
-        return expr.identifier.lexeme() + " = " + expr.expression.accept(this);
+        return expr.target.lexeme() + " = " + expr.expression.accept(this);
     }
 
     @Override
@@ -53,7 +57,7 @@ public class AstPrinter implements Expr.Visitor<String> {
         builder.append("(");
         for (Expr arg : expr.arguments) {
             builder.append(arg.accept(this));
-            if (arg != expr.arguments.get(expr.arguments.size() - 1))
+            if (!arg.equals(expr.arguments.get(expr.arguments.size() - 1)))
                 builder.append(", ");
         }
         builder.append(")");
@@ -62,7 +66,25 @@ public class AstPrinter implements Expr.Visitor<String> {
 
     @Override
     public String visitFunctionExpr(Expr.Function expr) {
-        return "Function expression";
+        StringBuilder builder = new StringBuilder();
+        builder.append("fun <lambda/anonymous>");
+        builder.append("(");
+        for (Token param : expr.parameters) {
+            builder.append(param.lexeme());
+            if (!param.equals(expr.parameters.get(expr.parameters.size() - 1)))
+                builder.append(", ");
+        }
+        builder.append(")");
+        if (!concise) {
+            builder.append(" {\n");
+            for (Stmt stmt : expr.body) {
+                builder.append("\t");
+                builder.append(stmt.accept(this));
+                builder.append("\n");
+            }
+            builder.append("}");
+        }
+        return builder.toString();
     }
 
     @Override
@@ -74,29 +96,113 @@ public class AstPrinter implements Expr.Visitor<String> {
                 return str.substring(0, str.length() - 2);
             }
         }
-        return expr.value.toString();
+        return '"' + expr.value.toString() + '"';
     }
 
     @Override
-    public String visitVariableExpr(Expr.Variable expr) {
-        StringBuilder builder = new StringBuilder();
-        try {
-            Object binding = interpreter.environment.getBinding(expr.identifier);
-            if (binding instanceof FlexCallable function) {
-                builder.append(function);
-            } else {
-                builder.append(expr.identifier.lexeme());
-                builder.append("(");
-                builder.append(binding);
-                builder.append(")");
-
-            }
-        } catch (RuntimeError ignored) {}
-        return builder.toString();
+    public String visitVariableExpr(Expr.Variable expr) { //Modify how AstPrinter.class access binding
+        return expr.identifier.lexeme();
     }
 
     @Override
     public String visitGroupingExpr(Expr.Grouping expr) {
         return "(" + expr.accept(this) + ")";
+    }
+
+    @Override
+    public String visitFunctionDclStmt(Stmt.FunctionDcl stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("fun ");
+        builder.append(stmt.identifier.lexeme());
+        builder.append("(");
+        for (Token param : stmt.function.parameters) {
+            builder.append(param.lexeme());
+            if (!param.equals(stmt.function.parameters.get(stmt.function.parameters.size() - 1)))
+                builder.append(", ");
+        }
+        builder.append(")");
+        if (!concise) {
+            builder.append(" ");
+            builder.append(" {\n");
+            for (Stmt bodyStmt : stmt.function.body) {
+                builder.append("\t");
+                builder.append(bodyStmt.accept(this));
+                builder.append("\n");
+            }
+            builder.append("}");
+        }
+        return builder.toString();
+    }
+
+    @Override
+    public String visitVariableDclStmt(Stmt.VariableDcl stmt) {
+        return "var " + stmt.identifier.lexeme() + " = " + stmt.initializer.accept(this) + ";";
+    }
+
+    @Override
+    public String visitBlockStmt(Stmt.Block stmt) {
+        if (concise) {
+            return "block statement (" + stmt.statements.size() + ")";
+        } else {
+            StringBuilder builder = new StringBuilder();
+            builder.append("{\n");
+            for (Stmt statement : stmt.statements) {
+                builder.append("\t");
+                builder.append(statement.accept(this));
+                builder.append("\n");
+            }
+            builder.append("}");
+            return builder.toString();
+        }
+    }
+
+    @Override
+    public String visitBreakStmt(Stmt.Break stmt) {
+        return "break;";
+    }
+
+    @Override
+    public String visitIfStmt(Stmt.If stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("if (");
+        builder.append(stmt.condition.accept(this));
+        builder.append(")");
+        if (!concise) {
+            builder.append(" ");
+            builder.append(stmt.thenBranch.accept(this));
+            if (stmt.elseBranch != null) {
+                builder.append(" else ");
+                builder.append(stmt.elseBranch.accept(this));
+            }
+        }
+        return builder.toString();
+    }
+
+    @Override
+    public String visitPrintStmt(Stmt.Print stmt) {
+        return "print " + stmt.expression.accept(this) + ";";
+    }
+
+    @Override
+    public String visitReturnStmt(Stmt.Return stmt) {
+        if (stmt.expression != null) {
+            return "return " + stmt.expression.accept(this) + ";";
+        } else {
+            return "return;";
+        }
+    }
+
+    @Override
+    public String visitWhileStmt(Stmt.While stmt) {
+        if (concise) {
+            return "while (" + stmt.condition.accept(this) + ")";
+        } else {
+            return "while (" + stmt.condition.accept(this) + ")" + stmt.body.accept(this);
+        }
+    }
+
+    @Override
+    public String visitExpressionStmt(Stmt.Expression stmt) {
+        return stmt.expression.accept(this) + ";";
     }
 }

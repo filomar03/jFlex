@@ -1,2 +1,8 @@
 implement lists
 implement class and methods for files, networking and strings
+null-safety
+
+speed up code
+implement function body as a single statement???
+implement return check at compiler time
+fix recursion.flx

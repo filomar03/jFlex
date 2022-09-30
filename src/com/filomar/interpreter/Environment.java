@@ -18,32 +18,43 @@ public class Environment {
     }
 
     //Methods
+    //--Traverse environments
+    Environment getAncestor(int distance) {
+        Environment environment = this;
+        for (int i = 0; i < distance; i++) {
+            assert environment != null : "[ERROR] Cannot find environment specified by resolver";
+            environment = environment.parent;
+        }
+
+        return environment;
+    }
+
     //--Manage environment bindings
-    void createBinding(Token identifier, Object value) {
+    void create(Token identifier, Object value) {
         bindings.put(identifier.lexeme(), value);
     }
 
-    Object getBinding(Token identifier) {
+    Object get(Token identifier) {
         if (bindings.containsKey(identifier.lexeme()))
             return bindings.get(identifier.lexeme());
-
-        if (parent != null)
-            return parent.getBinding(identifier);
 
         throw new RuntimeError(identifier, "Undefined binding '" + identifier.lexeme() + "'.");
     }
 
-    void setBinding(Token identifier, Object value) {
+    Object getAt(String name, int distance) {
+        return getAncestor(distance).bindings.get(name);
+    }
+
+    void assign(Token identifier, Object value) {
         if (bindings.containsKey(identifier.lexeme())) {
             bindings.put(identifier.lexeme(), value);
             return;
         }
 
-        if (parent != null) {
-            parent.setBinding(identifier, value);
-            return;
-        }
-
         throw new RuntimeError(identifier, "Undefined binding " + identifier.lexeme() + "'.");
+    }
+
+    void assignAt(String name, Object value, int distance) {
+        getAncestor(distance).bindings.put(name, value);
     }
 }

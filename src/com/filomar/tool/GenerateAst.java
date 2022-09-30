@@ -12,11 +12,11 @@ public class GenerateAst {
             System.exit(64);
         }
         defineAst(args[0], "com.filomar.interpreter", "Expr", Arrays.asList(
-                "Assign   : Token identifier, Expr expression",
+                "Assign   : Token target, Expr expression",
                 "Logical  : Expr left, Token operator, Expr right", //introduced a new class for logical operations to allow short-circuiting without modifying Binary class code
                 "Binary   : Expr left, Token operator, Expr right",
                 "Unary    : Token operator, Expr expression",
-                "Call     : Expr callee, Token paren, List<Expr> arguments",
+                "Call     : Expr callee, Token location, List<Expr> arguments",
                 "Function : List<Token> parameters, List<Stmt> body",
                 "Literal  : Object value",
                 "Variable : Token identifier",
@@ -30,8 +30,8 @@ public class GenerateAst {
                 "Block       : List<Stmt> statements",
                 "Break       : ",
                 "If          : Expr condition, Stmt thenBranch, Stmt elseBranch",
-                "Print       : Expr value",
-                "Return      : Expr value",
+                "Print       : Expr expression",
+                "Return      : Expr expression",
                 "While       : Expr condition, Stmt body",
                 "Expression  : Expr expression"
                 ));
@@ -90,6 +90,12 @@ public class GenerateAst {
         writer.println("\t\t@Override");
         writer.println("\t\t<R> R accept(Visitor<R> visitor) {");
         writer.println("\t\t\treturn visitor.visit" + className + baseName + "(this);");
+        writer.println("\t\t}\n");
+
+        //Creates useful strings representation of AST nodes for the debugger, see AstPrinter.class
+        writer.println("\t\t@Override");
+        writer.println("\t\tpublic String toString() {");
+        writer.println("\t\t\treturn Flex.debugAstPrinter().stringify(this);");
         writer.println("\t\t}");
 
         writer.println("\t}\n");

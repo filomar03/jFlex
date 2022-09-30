@@ -1,6 +1,7 @@
 package com.filomar.interpreter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.filomar.interpreter.TokenType.IDENTIFIER;
@@ -17,12 +18,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     //Fields
-    final Environment globals = new Environment();
-    protected Environment environment = globals;
+    private final Environment globals = new Environment();
+    private Environment environment = globals;
+    private final HashMap<Expr, Integer> locals = new HashMap<>();
 
     //Constructors
     Interpreter() {
-        globals.createBinding(new Token(IDENTIFIER, "clock", null, 0, 0), new FlexCallable() {
+        globals.create(new Token(IDENTIFIER, "clock", null, 0, 0), new FlexCallable() {
             @Override
             public int arity() {
                 return 0;
@@ -41,11 +43,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     //Methods
-    //--Statements executions
+    //--Store resolver analysis results
+    void resolve(Expr expr, int distance) {
+        locals.put(expr, distance);
+    }
+
+    //--Interpreter core methods
     void interpret(List<Stmt> statements) {
         try {
-            for (Stmt statement : statements) {
-                execute(statement);
+            for (Stmt stmt : statements) {
+                execute(stmt);
             }
         } catch (RuntimeError error) {
             Flex.onRuntimeError(error);
@@ -59,31 +66,40 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             for (Stmt stmt : statements) {
                 execute(stmt);
             }
-        } catch (RuntimeError error) {
-            Flex.onRuntimeError(error);
         } finally {
             this.environment = previous;
         }
     }
 
+    //--Environment interaction
+    private Object lookUpVariable(Expr expr, Token identifier) {
+        Integer distance = locals.get(expr);
+        if (distance != null) {
+            return environment.getAt(identifier.lexeme(), distance);
+        } else {
+            return globals.get(identifier);
+        }
+    }
+
+    //--Visitor pattern type matching (statements)
     private void execute(Stmt stmt) {
         stmt.accept(this);
     }
 
-    //--Visitor pattern declarations interpretation
+    //--Visitor pattern implementations (declarations)
     @Override
     public Void visitFunctionDclStmt(Stmt.FunctionDcl stmt) {
-        environment.createBinding(stmt.identifier, new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment));
+        environment.create(stmt.identifier, new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment));
         return null;
     }
 
     @Override
     public Void visitVariableDclStmt(Stmt.VariableDcl stmt) {
-        environment.createBinding(stmt.identifier, evaluate(stmt.initializer));
+        environment.create(stmt.identifier, stmt.initializer != null ? evaluate(stmt.initializer) : null);
         return null;
     }
 
-    //--Visitor pattern statements interpretation
+    //--Visitor pattern implementations (statements)
     @Override
     public Void visitBlockStmt(Stmt.Block block) {
         executeBlock(block.statements, new Environment(this.environment));
@@ -106,14 +122,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitPrintStmt(Stmt.Print stmt) {
-        System.out.println(stringify(evaluate(stmt.value)));
+        System.out.println(stringify(evaluate(stmt.expression)));
         return null;
     }
 
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {
-        Object value = evaluate(stmt.value);
-        throw new ReturnEx(value);
+        throw new ReturnEx(stmt.expression != null ? evaluate(stmt.expression) : null);
     }
 
     @Override
@@ -134,23 +149,31 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
-    //--Visitor pattern expressions evaluation
-    private Object evaluate(Expr expression) {
-        return expression.accept(this);
+    //--Visitor pattern type matching (expressions)
+    private Object evaluate(Expr expr) {
+        return expr.accept(this);
     }
 
+    //--Visitor pattern implementations (expressions)
     @Override
-    public Object visitAssignExpr(Expr.Assign expression) {
-        Object value = evaluate(expression.expression);
-        environment.setBinding(expression.identifier, value);
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.expression);
+
+        Integer distance = locals.get(expr);
+        if (distance != null) {
+            environment.assignAt(expr.target.lexeme(), value, distance);
+        } else {
+            globals.assign(expr.target, value);
+        }
+
         return value;
     }
 
     @Override
-    public Object visitLogicalExpr(Expr.Logical expression) {
-        Object left = evaluate(expression.left);
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.left);
 
-        switch (expression.operator.type()) { //DIY short-circuiting even if java operators already have it
+        switch (expr.operator.type()) { //DIY short-circuiting even if java operators already have it
             case AND -> {
                 if (!isTruth(left))
                     return left;
@@ -161,29 +184,29 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             }
         }
 
-        return evaluate(expression.right);
+        return evaluate(expr.right);
     }
 
     @Override
-    public Object visitBinaryExpr(Expr.Binary expression) {
-        Object left = evaluate(expression.left);
-        Object right = evaluate(expression.right);
+    public Object visitBinaryExpr(Expr.Binary expr) {
+        Object left = evaluate(expr.left);
+        Object right = evaluate(expr.right);
 
-        switch (expression.operator.type()) {
+        switch (expr.operator.type()) {
             case SLASH -> {
-                checkNumericOperand(expression.operator, "All operands must be numbers", left, right);
+                checkNumericOperand(expr.operator, "All operands must be numbers", left, right);
                 return (double) left / (double) right;
             }
             case STAR -> {
-                checkNumericOperand(expression.operator, "All operands must be numbers", left, right);
+                checkNumericOperand(expr.operator, "All operands must be numbers", left, right);
                 return (double) left * (double) right;
             }
             case MODULUS -> {
-                checkNumericOperand(expression.operator, "All operands must be numbers", left, right);
+                checkNumericOperand(expr.operator, "All operands must be numbers", left, right);
                 return (double) left % (double) right;
             }
             case MINUS -> {
-                checkNumericOperand(expression.operator, "All operands must be numbers", left, right);
+                checkNumericOperand(expr.operator, "All operands must be numbers", left, right);
                 return (double) left - (double) right;
             }
             case PLUS -> {
@@ -200,7 +223,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String)
                     right = (double) ((String) right).length();
 
-                checkNumericOperand(expression.operator, "All operands must be numbers or strings", left, right);
+                checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
                 return (double) left > (double) right;
             }
             case GREATER_EQUAL -> {
@@ -210,7 +233,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String)
                     right = (double) ((String) right).length();
 
-                checkNumericOperand(expression.operator, "All operands must be numbers or strings", left, right);
+                checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
                 return (double) left >= (double) right;
             }
             case LESS -> {
@@ -220,7 +243,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String)
                     right = (double) ((String) right).length();
 
-                checkNumericOperand(expression.operator, "All operands must be numbers or strings", left, right);
+                checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
                 return (double) left < (double) right;
             }
             case LESS_EQUAL -> {
@@ -230,7 +253,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String)
                     right = (double) ((String) right).length();
 
-                checkNumericOperand(expression.operator, "All operands must be numbers or strings", left, right);
+                checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
                 return (double) left <= (double) right;
             }
             case BANG_EQUAL -> {
@@ -245,16 +268,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Object visitUnaryExpr(Expr.Unary expression) {
-        Object right = evaluate(expression.expression);
+    public Object visitUnaryExpr(Expr.Unary expr) {
+        Object expression = evaluate(expr.expression);
 
-        switch (expression.operator.type()) {
+        switch (expr.operator.type()) {
             case BANG -> {
-                return !isTruth(right);
+                return !isTruth(expression);
             }
             case MINUS -> {
-                checkNumericOperand(expression.operator, "All operands must be numbers", right);
-                return -(Double) right;
+                checkNumericOperand(expr.operator, "All operands must be numbers", expr.expression);
+                return -(Double) expression;
             }
         }
 
@@ -262,20 +285,20 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Object visitCallExpr(Expr.Call expression) {
-        Object callee = evaluate(expression.callee);
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
 
         List<Object> args = new ArrayList<>();
-        for (Expr arg : expression.arguments) {
+        for (Expr arg : expr.arguments) {
             args.add(evaluate(arg));
         }
 
         if (!(callee instanceof FlexCallable)) {
-            throw new RuntimeError(expression.paren, "Callee cannot be called, only function and classes can be called");
+            throw new RuntimeError(expr.locationRef, "Callee cannot be called, only function and classes can be called");
         }
 
         if (args.size() != ((FlexCallable) callee).arity()) {
-            throw new RuntimeError(expression.paren, "Expected " + ((FlexCallable) callee).arity() + " argument/s, found " + args.size());
+            throw new RuntimeError(expr.locationRef, "Expected " + ((FlexCallable) callee).arity() + " argument/s, found " + args.size());
         }
 
         try {
@@ -291,18 +314,23 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Object visitLiteralExpr(Expr.Literal expression) {
-        return expression.value;
+    public Object visitLiteralExpr(Expr.Literal expr) {
+        return expr.value;
     }
 
     @Override
-    public Object visitVariableExpr(Expr.Variable expression) {
-        return environment.getBinding(expression.identifier);
+    public Object visitVariableExpr(Expr.Variable expr) {
+        Integer distance = locals.get(expr);
+        if (distance != null) {
+            return environment.getAt(expr.identifier.lexeme(), distance);
+        } else {
+            return globals.get(expr.identifier);
+        }
     }
 
     @Override
-    public Object visitGroupingExpr(Expr.Grouping expression) {
-        return evaluate(expression.expression);
+    public Object visitGroupingExpr(Expr.Grouping expr) {
+        return evaluate(expr.expression);
     }
 
     //--Utilities

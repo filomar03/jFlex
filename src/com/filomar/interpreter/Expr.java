@@ -18,17 +18,21 @@ abstract class Expr {
 	abstract <R> R accept(Visitor<R> visitor);
 
 	static class Assign extends Expr {
-		final Token identifier;
+		final Token target;
 		final Expr expression;
 
-		Assign(Token identifier, Expr expression) {
-			this.identifier = identifier;
+		Assign(Token target, Expr expression) {
+			this.target = target;
 			this.expression = expression;
 		}
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitAssignExpr(this);
+		}
+		@Override
+		public String toString() {
+			return Flex.debugAstPrinter().stringify(this);
 		}
 	}
 
@@ -47,6 +51,10 @@ abstract class Expr {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitLogicalExpr(this);
 		}
+		@Override
+		public String toString() {
+			return Flex.debugAstPrinter().stringify(this);
+		}
 	}
 
 	static class Binary extends Expr {
@@ -64,6 +72,10 @@ abstract class Expr {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitBinaryExpr(this);
 		}
+		@Override
+		public String toString() {
+			return Flex.debugAstPrinter().stringify(this);
+		}
 	}
 
 	static class Unary extends Expr {
@@ -79,22 +91,30 @@ abstract class Expr {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitUnaryExpr(this);
 		}
+		@Override
+		public String toString() {
+			return Flex.debugAstPrinter().stringify(this);
+		}
 	}
 
 	static class Call extends Expr {
 		final Expr callee;
-		final Token paren;
+		final Token locationRef;
 		final List<Expr> arguments;
 
-		Call(Expr callee, Token paren, List<Expr> arguments) {
+		Call(Expr callee, Token locationReference, List<Expr> arguments) {
 			this.callee = callee;
-			this.paren = paren;
+			this.locationRef = locationReference;
 			this.arguments = arguments;
 		}
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitCallExpr(this);
+		}
+		@Override
+		public String toString() {
+			return Flex.debugAstPrinter().stringify(this);
 		}
 	}
 
@@ -111,6 +131,10 @@ abstract class Expr {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitFunctionExpr(this);
 		}
+		@Override
+		public String toString() {
+			return Flex.debugAstPrinter().stringify(this);
+		}
 	}
 
 	static class Literal extends Expr {
@@ -123,6 +147,10 @@ abstract class Expr {
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitLiteralExpr(this);
+		}
+		@Override
+		public String toString() {
+			return Flex.debugAstPrinter().stringify(this);
 		}
 	}
 
@@ -137,6 +165,10 @@ abstract class Expr {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitVariableExpr(this);
 		}
+		@Override
+		public String toString() {
+			return Flex.debugAstPrinter().stringify(this);
+		}
 	}
 
 	static class Grouping extends Expr {
@@ -149,6 +181,10 @@ abstract class Expr {
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitGroupingExpr(this);
+		}
+		@Override
+		public String toString() {
+			return Flex.debugAstPrinter().stringify(this);
 		}
 	}
 
