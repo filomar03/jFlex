@@ -179,7 +179,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {
         if (currentFunciton == FunctionType.NONE) {
-
+            Flex.onErrorDetected(stmt.keyword, "Cannot return at top level code");
         }
 
         if (stmt.expression != null) resolve(stmt.expression);

@@ -324,8 +324,8 @@ public class Parser {
 
         while (true) {
             if (match(LEFT_PAREN)) {
+                Token locationRef = previous();
                 List<Expr> arguments = new ArrayList<>();
-                Token paren;
                 if (!match(RIGHT_PAREN)) {
                     do {
                         if (arguments.size() < 255) {
@@ -335,12 +335,10 @@ public class Parser {
                         }
                     } while (match(COMMA));
 
-                    paren = consume(RIGHT_PAREN, "Expected ')' after arguments");
-                } else {
-                    paren = previous();
+                    consume(RIGHT_PAREN, "Expected ')' after arguments");
                 }
 
-                expr = new Expr.Call(expr, paren, arguments);
+                expr = new Expr.Call(expr, locationRef, arguments);
             } else {
                 break;
             }
