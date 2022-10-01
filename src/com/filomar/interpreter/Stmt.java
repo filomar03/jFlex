@@ -30,6 +30,7 @@ abstract class Stmt {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitFunctionDclStmt(this);
 		}
+
 		@Override
 		public String toString() {
 			return Flex.debugAstPrinter().stringify(this);
@@ -49,6 +50,7 @@ abstract class Stmt {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitVariableDclStmt(this);
 		}
+
 		@Override
 		public String toString() {
 			return Flex.debugAstPrinter().stringify(this);
@@ -66,6 +68,7 @@ abstract class Stmt {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitBlockStmt(this);
 		}
+
 		@Override
 		public String toString() {
 			return Flex.debugAstPrinter().stringify(this);
@@ -81,6 +84,7 @@ abstract class Stmt {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitBreakStmt(this);
 		}
+
 		@Override
 		public String toString() {
 			return Flex.debugAstPrinter().stringify(this);
@@ -102,6 +106,7 @@ abstract class Stmt {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitIfStmt(this);
 		}
+
 		@Override
 		public String toString() {
 			return Flex.debugAstPrinter().stringify(this);
@@ -119,6 +124,7 @@ abstract class Stmt {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitPrintStmt(this);
 		}
+
 		@Override
 		public String toString() {
 			return Flex.debugAstPrinter().stringify(this);
@@ -126,9 +132,11 @@ abstract class Stmt {
 	}
 
 	static class Return extends Stmt {
+		final Token keyword;
 		final Expr expression;
 
-		Return(Expr expression) {
+		Return(Token keyword, Expr expression) {
+			this.keyword = keyword;
 			this.expression = expression;
 		}
 
@@ -136,6 +144,7 @@ abstract class Stmt {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitReturnStmt(this);
 		}
+
 		@Override
 		public String toString() {
 			return Flex.debugAstPrinter().stringify(this);
@@ -155,6 +164,7 @@ abstract class Stmt {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitWhileStmt(this);
 		}
+
 		@Override
 		public String toString() {
 			return Flex.debugAstPrinter().stringify(this);
@@ -172,6 +182,7 @@ abstract class Stmt {
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitExpressionStmt(this);
 		}
+
 		@Override
 		public String toString() {
 			return Flex.debugAstPrinter().stringify(this);

@@ -16,7 +16,7 @@ public class GenerateAst {
                 "Logical  : Expr left, Token operator, Expr right", //introduced a new class for logical operations to allow short-circuiting without modifying Binary class code
                 "Binary   : Expr left, Token operator, Expr right",
                 "Unary    : Token operator, Expr expression",
-                "Call     : Expr callee, Token location, List<Expr> arguments",
+                "Call     : Expr callee, Token locationReference, List<Expr> arguments",
                 "Function : List<Token> parameters, List<Stmt> body",
                 "Literal  : Object value",
                 "Variable : Token identifier",
@@ -31,7 +31,7 @@ public class GenerateAst {
                 "Break       : ",
                 "If          : Expr condition, Stmt thenBranch, Stmt elseBranch",
                 "Print       : Expr expression",
-                "Return      : Expr expression",
+                "Return      : Token keyword, Expr expression",
                 "While       : Expr condition, Stmt body",
                 "Expression  : Expr expression"
                 ));

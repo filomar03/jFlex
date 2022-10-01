@@ -191,7 +191,7 @@ public class Parser {
             value = expression();
             consume(SEMICOLON, "Expected ';' at the end of a statement");
         }
-        return new Stmt.Return(value);
+        return new Stmt.Return(previous(), value);
     }
 
     private Stmt whileStmt() {

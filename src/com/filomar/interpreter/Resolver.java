@@ -6,10 +6,16 @@ import java.util.Map;
 import java.util.Stack;
 
 public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
+    //Enums
+    private enum FunctionType {
+        NONE,
+        FUNCTION
+    }
+
     //Fields
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
-
+    private FunctionType currentFunciton = FunctionType.NONE;
 
     //Constructors
     Resolver(Interpreter interpreter) {
@@ -100,7 +106,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionExpr(Expr.Function expr) {
-        resolveFunction(expr);
+        resolveFunction(expr, FunctionType.FUNCTION);
         return null;
     }
 
@@ -129,7 +135,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitFunctionDclStmt(Stmt.FunctionDcl stmt) {
         declare(stmt.identifier);
         define(stmt.identifier);
-        resolveFunction(stmt.function);
+        resolveFunction(stmt.function, FunctionType.FUNCTION);
         return null;
     }
 
@@ -172,6 +178,10 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {
+        if (currentFunciton == FunctionType.NONE) {
+
+        }
+
         if (stmt.expression != null) resolve(stmt.expression);
         return null;
     }
@@ -199,7 +209,10 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         }
     }
 
-    private void resolveFunction(Expr.Function function) {
+    private void resolveFunction(Expr.Function function, FunctionType type) {
+        FunctionType enclosingFunction = currentFunciton;
+        currentFunciton = type;
+
         beginScope();
         for (Token param : function.parameters) {
             declare(param);
@@ -207,5 +220,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         }
         resolve(function.body);
         exitScope();
+
+        currentFunciton = enclosingFunction;
     }
 }

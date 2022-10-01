@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.filomar.interpreter.TokenType.IDENTIFIER;
-
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     //Nested classes
     private static class BreakEx extends RuntimeException {}
@@ -24,7 +22,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     //Constructors
     Interpreter() {
-        globals.create(new Token(IDENTIFIER, "clock", null, 0, 0), new FlexCallable() {
+        globals.create("clock", new FlexCallable() {
             @Override
             public int arity() {
                 return 0;
@@ -71,16 +69,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
     }
 
-    //--Environment interaction
-    private Object lookUpVariable(Expr expr, Token identifier) {
-        Integer distance = locals.get(expr);
-        if (distance != null) {
-            return environment.getAt(identifier.lexeme(), distance);
-        } else {
-            return globals.get(identifier);
-        }
-    }
-
     //--Visitor pattern type matching (statements)
     private void execute(Stmt stmt) {
         stmt.accept(this);
@@ -89,13 +77,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     //--Visitor pattern implementations (declarations)
     @Override
     public Void visitFunctionDclStmt(Stmt.FunctionDcl stmt) {
-        environment.create(stmt.identifier, new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment));
+        environment.create(stmt.identifier.lexeme(), new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment));
         return null;
     }
 
     @Override
     public Void visitVariableDclStmt(Stmt.VariableDcl stmt) {
-        environment.create(stmt.identifier, stmt.initializer != null ? evaluate(stmt.initializer) : null);
+        environment.create(stmt.identifier.lexeme(), stmt.initializer != null ? evaluate(stmt.initializer) : null);
         return null;
     }
 
@@ -294,15 +282,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
 
         if (!(callee instanceof FlexCallable)) {
-            throw new RuntimeError(expr.locationRef, "Callee cannot be called, only function and classes can be called");
+            throw new RuntimeError(expr.locationReference, "Callee cannot be called, only function and classes can be called");
         }
 
         if (args.size() != ((FlexCallable) callee).arity()) {
-            throw new RuntimeError(expr.locationRef, "Expected " + ((FlexCallable) callee).arity() + " argument/s, found " + args.size());
+            throw new RuntimeError(expr.locationReference, "Expected " + ((FlexCallable) callee).arity() + " argument/s, found " + args.size());
         }
 
         try {
-            return ((FlexFunction) callee).call(this, args);
+            return ((FlexCallable) callee).call(this, args);
         } catch (ReturnEx returnEx) {
             return returnEx.value;
         }

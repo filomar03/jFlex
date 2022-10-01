@@ -6,5 +6,5 @@ fun fib(n) {
 for (var i = 0; i < 50; i = i + 1) {
     var start = clock();
     var n = fib(i);
-    print "fib(" + i + ") = " + n + " in " + (clock() - start) + " seconds";
+    print "fib(" + i + ") = " + n + " in " + ((clock() - start) / 1000) + " seconds";
 }

@@ -30,8 +30,8 @@ public class Environment {
     }
 
     //--Manage environment bindings
-    void create(Token identifier, Object value) {
-        bindings.put(identifier.lexeme(), value);
+    void create(String name, Object value) {
+        bindings.put(name, value);
     }
 
     Object get(Token identifier) {
