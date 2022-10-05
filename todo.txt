@@ -4,4 +4,5 @@ null-safety
 
 speed up code
 
-switch compilation to make
+move break control into resolver
+switch print from statement to function
