@@ -15,7 +15,8 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     //Fields
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
-    private FunctionType currentFunciton = FunctionType.NONE;
+    private FunctionType currentFunction = FunctionType.NONE;
+    private int loopDepth = 0;
 
     //Constructors
     Resolver(Interpreter interpreter) {
@@ -159,6 +160,10 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitBreakStmt(Stmt.Break stmt) {
+        if (loopDepth == 0) {
+            Flex.onErrorDetected(stmt.keyword, "Cannot use break outside loop");
+        }
+
         return null;
     }
 
@@ -178,7 +183,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {
-        if (currentFunciton == FunctionType.NONE) {
+        if (currentFunction == FunctionType.NONE) {
             Flex.onErrorDetected(stmt.keyword, "Cannot return at top level code");
         }
 
@@ -188,8 +193,13 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
+        loopDepth++;
+
         resolve(stmt.condition);
         resolve(stmt.body);
+
+        loopDepth--;
+
         return null;
     }
 
@@ -210,8 +220,8 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     private void resolveFunction(Expr.Function function, FunctionType type) {
-        FunctionType enclosingFunction = currentFunciton;
-        currentFunciton = type;
+        FunctionType enclosingFunction = currentFunction;
+        currentFunction = type;
 
         beginScope();
         for (Token param : function.parameters) {
@@ -221,6 +231,6 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         resolve(function.body);
         exitScope();
 
-        currentFunciton = enclosingFunction;
+        currentFunction = enclosingFunction;
     }
 }

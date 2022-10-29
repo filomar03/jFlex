@@ -28,7 +28,7 @@ public class GenerateAst {
                 "VariableDcl : Token identifier, Expr initializer",
                 //high-priority statements (aka: statements)
                 "Block       : List<Stmt> statements",
-                "Break       : ",
+                "Break       : Token keyword",
                 "If          : Expr condition, Stmt thenBranch, Stmt elseBranch",
                 "Print       : Expr expression",
                 "Return      : Token keyword, Expr expression",

@@ -18,4 +18,4 @@ $(CLS): $(OUT_DIR)/%.class: $(SRC_DIR)/%.java
 		@$(JC) $(JCFLAGS) $<
 
 clean:
-		rm $(OUT_DIR)/$(PACKAGE)/*.class
+		@rm $(OUT_DIR)/$(PACKAGE)/*.class

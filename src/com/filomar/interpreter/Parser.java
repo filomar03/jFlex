@@ -13,7 +13,6 @@ public class Parser {
     //Fields
     private final List<Token> tokens;
     private int current = 0;
-    private int loopDepth = 0;
 
     //Constructors
     Parser(List<Token> tokens) {
@@ -106,13 +105,8 @@ public class Parser {
     }
 
     private Stmt breakStmt() {
-        if (loopDepth == 0) {
-            throw error(current(), "Cannot use 'break' outside a loop.");
-        }
-
         consume(SEMICOLON, "Expected ';' at the end of a statement");
-
-        return new Stmt.Break();
+        return new Stmt.Break(previous());
     }
 
     private Stmt forStmt() { //Syntactic sugar, parsed as a 'WHILE' --> see scripts/for_loop_issue.flx
@@ -139,30 +133,25 @@ public class Parser {
             consume(RIGHT_PAREN, "Expected ')' after update");
         }
 
-        try {
-            loopDepth++;
-            Stmt body = statement();
+        Stmt body = statement();
 
-            if (increment != null) {
-                body = new Stmt.Block(Arrays.asList(
-                        body,
-                        new Stmt.Expression(increment)
-                ));
-            }
-
-            body = new Stmt.While((condition != null ? condition : new Expr.Literal(true)), body);
-
-            if (initializer != null) {
-                body = new Stmt.Block(Arrays.asList(
-                        initializer,
-                        body
-                ));
-            }
-
-            return body;
-        } finally {
-            loopDepth--;
+        if (increment != null) {
+            body = new Stmt.Block(Arrays.asList(
+                    body,
+                    new Stmt.Expression(increment)
+            ));
         }
+
+        body = new Stmt.While((condition != null ? condition : new Expr.Literal(true)), body);
+
+        if (initializer != null) {
+            body = new Stmt.Block(Arrays.asList(
+                    initializer,
+                    body
+            ));
+        }
+
+        return body;
     }
 
     private Stmt ifStmt() {
@@ -199,14 +188,8 @@ public class Parser {
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expected ')' after condition");
 
-        try {
-            loopDepth++;
-            Stmt body = statement();
-
-            return new Stmt.While(condition, body);
-        } finally {
-            loopDepth--;
-        }
+        Stmt body = statement();
+        return new Stmt.While(condition, body);
     }
 
     private Stmt expressionStmt() {

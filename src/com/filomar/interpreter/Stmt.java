@@ -76,8 +76,10 @@ abstract class Stmt {
 	}
 
 	static class Break extends Stmt {
+		final Token keyword;
 
-		Break() {
+		Break(Token keyword) {
+			this.keyword = keyword;
 		}
 
 		@Override
