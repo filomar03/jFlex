@@ -1,11 +1,4 @@
-fun fib(n) {
-    if (n <= 1) return n;
-    return fib(n - 1) + fib(n - 2);
-    break;
+class ClasseDiProva {
 }
 
-for (var i = 0; i < 50; i = i + 1) {
-    var start = clock();
-    var n = fib(i);
-    print("fib(" + i + ") = " + n + " in " + (clock() - start) + " seconds");
-}
+print ClasseDiProva;

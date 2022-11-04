@@ -4,6 +4,7 @@ import java.util.List;
 
 abstract class Stmt {
 	interface Visitor<R> {
+		R visitClassDclStmt(ClassDcl stmt);
 		R visitFunctionDclStmt(FunctionDcl stmt);
 		R visitVariableDclStmt(VariableDcl stmt);
 		R visitBlockStmt(Block stmt);
@@ -16,6 +17,26 @@ abstract class Stmt {
 	}
 
 	abstract <R> R accept(Visitor<R> visitor);
+
+	static class ClassDcl extends Stmt {
+		final Token identifier;
+		final List<Stmt.FunctionDcl> methods;
+
+		ClassDcl(Token identifier, List<Stmt.FunctionDcl> methods) {
+			this.identifier = identifier;
+			this.methods = methods;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitClassDclStmt(this);
+		}
+
+		@Override
+		public String toString() {
+			return Flex.debugAstPrinter().stringify(this);
+		}
+	}
 
 	static class FunctionDcl extends Stmt {
 		final Token identifier;

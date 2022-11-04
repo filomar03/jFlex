@@ -1,3 +1,0 @@
-implement lists
-implement class and methods for files, networking and strings
-null-safety

@@ -76,6 +76,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     //--Visitor pattern implementations (declarations)
     @Override
+    public Void visitClassDclStmt(Stmt.ClassDcl stmt) {
+        environment.create(stmt.identifier.lexeme(), null);
+        FlexClass klass = new FlexClass(stmt.identifier.lexeme());
+        environment.assign(stmt.identifier, klass);
+        return null;
+    }
+
+    @Override
     public Void visitFunctionDclStmt(Stmt.FunctionDcl stmt) {
         environment.create(stmt.identifier.lexeme(), new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment));
         return null;

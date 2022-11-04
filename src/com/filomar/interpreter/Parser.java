@@ -32,6 +32,7 @@ public class Parser {
     //--Declarations parsing
     private Stmt declaration() {
         try {
+            if (match(CLASS)) return classDclStmt();
             if (check(current(), FUN) && check(next(), IDENTIFIER)) {
                 consume(FUN, "This error should never be thrown");
                 return functionDclStmt();
@@ -42,6 +43,19 @@ public class Parser {
             synchronize();
             return null;
         }
+    }
+
+    private Stmt classDclStmt() {
+        Token identifier = consume(IDENTIFIER, "Expected a valid class name after keyword class");
+        consume(LEFT_BRACE, "Expected opening bracket after class declaration");
+
+        List<Stmt.FunctionDcl> methods = new ArrayList<>();
+        while (match(FUN)) {
+            methods.add(new Stmt.FunctionDcl(consume(IDENTIFIER, "Expected a valid name when declaring a method"), functionDefinition()));
+        }
+
+        consume(RIGHT_BRACE, "Expected '}' after class body");
+        return new Stmt.ClassDcl(identifier, methods);
     }
 
     private Stmt functionDclStmt() {
@@ -302,7 +316,7 @@ public class Parser {
         return callExpr();
     }
 
-    private Expr callExpr() { //check if expr is a variable???
+    private Expr callExpr() {
         Expr expr = primaryExpr();
 
         while (true) {

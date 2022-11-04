@@ -47,7 +47,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         Map<String, Boolean> scope = scopes.peek();
 
         if (scope.containsKey(identifier.lexeme())) {
-            Flex.onErrorDetected(identifier, "A variable with this name already exists in teh current scope");
+            Flex.onErrorDetected(identifier, "A variable with this name already exists in the current scope");
         }
 
         scope.put(identifier.lexeme(), false);
@@ -129,6 +129,13 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     @Override
     public Void visitGroupingExpr(Expr.Grouping expr) {
         resolve(expr.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitClassDclStmt(Stmt.ClassDcl stmt) {
+        declare(stmt.identifier);
+        define(stmt.identifier);
         return null;
     }
 

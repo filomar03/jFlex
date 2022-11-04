@@ -34,6 +34,6 @@ public class FlexFunction implements FlexCallable{
 
     @Override
     public String toString() {
-        return "<fun> " + name;
+        return "(fun)" + name;
     }
 }

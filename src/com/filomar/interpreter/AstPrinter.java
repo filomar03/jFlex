@@ -110,6 +110,28 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitClassDclStmt(Stmt.ClassDcl stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("class ");
+        builder.append(stmt.identifier.lexeme());
+        if (concise) return builder.toString();
+        builder.append("{\n");
+        for (Stmt.FunctionDcl method : stmt.methods) {
+            builder.append("\tfun ");
+            builder.append(method.identifier.lexeme());
+            builder.append("(");
+            for (Token param : method.function.parameters) {
+                builder.append(param);
+                if (param != method.function.parameters.get(method.function.parameters.size() - 1))
+                    builder.append(", ");
+            }
+            builder.append(")\n");
+        }
+        builder.append("}");
+        return builder.toString();
+    }
+
+    @Override
     public String visitFunctionDclStmt(Stmt.FunctionDcl stmt) {
         StringBuilder builder = new StringBuilder();
         builder.append("fun ");

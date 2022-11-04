@@ -24,6 +24,7 @@ public class GenerateAst {
                 ));
         defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
                 //low-priority statements (aka: declarations)
+                "ClassDcl    : Token identifier, List<Stmt.FunctionDcl> methods",
                 "FunctionDcl : Token identifier, Expr.Function function",
                 "VariableDcl : Token identifier, Expr initializer",
                 //high-priority statements (aka: statements)
