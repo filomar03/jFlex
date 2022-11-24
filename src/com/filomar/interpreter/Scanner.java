@@ -1,9 +1,9 @@
 package com.filomar.interpreter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
 
 import static com.filomar.interpreter.TokenType.*;
 
@@ -15,11 +15,10 @@ public class Scanner {
     private int next = 0;
     private int line = 1;
     private int column = 0;
-    private static final Map<String, TokenType> keywords;
+    private static final Map<String, TokenType> keywords = new HashMap<>();;
 
     //Static blocks
     static {
-        keywords = new HashMap<>();
         keywords.put("and", AND);
         keywords.put("break", BREAK);
         keywords.put("class", CLASS);

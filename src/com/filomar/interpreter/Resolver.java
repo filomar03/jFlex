@@ -9,7 +9,8 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     //Enums
     private enum FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        METHOD
     }
 
     //Fields
@@ -77,6 +78,13 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitSetExpr(Expr.Set expr) {
+        resolve(expr.instance);
+        resolve(expr.value);
+        return null;
+    }
+
+    @Override
     public Void visitLogicalExpr(Expr.Logical expr) {
         resolve(expr.left);
         resolve(expr.right);
@@ -102,6 +110,12 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         for (Expr arg : expr.arguments) {
             resolve(arg);
         }
+        return null;
+    }
+
+    @Override
+    public Void visitGetExpr(Expr.Get expr) {
+        resolve(expr.instance);
         return null;
     }
 
@@ -133,14 +147,14 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Void visitClassDclStmt(Stmt.ClassDcl stmt) {
+    public Void visitClassStmt(Stmt.Class stmt) {
         declare(stmt.identifier);
         define(stmt.identifier);
         return null;
     }
 
     @Override
-    public Void visitFunctionDclStmt(Stmt.FunctionDcl stmt) {
+    public Void visitFunctionStmt(Stmt.Function stmt) {
         declare(stmt.identifier);
         define(stmt.identifier);
         resolveFunction(stmt.function, FunctionType.FUNCTION);
@@ -148,7 +162,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Void visitVariableDclStmt(Stmt.VariableDcl stmt) {
+    public Void visitVariableStmt(Stmt.Variable stmt) {
         declare(stmt.identifier);
         if (stmt.initializer != null) {
             resolve(stmt.initializer);
@@ -170,7 +184,6 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         if (loopDepth == 0) {
             Flex.onErrorDetected(stmt.keyword, "Cannot use break outside loop");
         }
-
         return null;
     }
 
@@ -191,7 +204,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {
         if (currentFunction == FunctionType.NONE) {
-            Flex.onErrorDetected(stmt.keyword, "Cannot return at top level code");
+            Flex.onErrorDetected(stmt.keyword, "Cannot return outside functions or methods");
         }
 
         if (stmt.expression != null) resolve(stmt.expression);

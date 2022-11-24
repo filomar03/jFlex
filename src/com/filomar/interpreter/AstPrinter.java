@@ -6,19 +6,13 @@
             public String toString() {
                 return Flex.debugAstPrinter().stringify(this);
             }
+
+    Remove stringify, since when concatenating strings java implicitly calls toString methods, that's already been overrided in Expr e Stmt classes
 */
 
-package com.filomar.interpreter;
+/* package com.filomar.interpreter;
 
 public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
-    //Fields
-    private final boolean concise;
-
-    //Constructors
-    public AstPrinter(boolean concise) {
-        this.concise = concise;
-    }
-
     //Methods
     //--Visitor pattern type matching
     String stringify(Expr expr) {
@@ -32,26 +26,37 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     //--Visitor pattern implementations
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
+        
         return expr.target.lexeme() + " = " + expr.expression.accept(this);
     }
 
     @Override
+    public String visitSetExpr(Expr.Set expr) {
+        
+        return expr.instance.accept(this) + " = " + expr.property.lexeme();
+    }
+    
+    @Override
     public String visitLogicalExpr(Expr.Logical expr) {
+        
         return expr.left.accept(this) + " " + expr.operator.lexeme() + " " + expr.right.accept(this);
     }
 
     @Override
     public String visitBinaryExpr(Expr.Binary expr) {
+        
         return expr.left.accept(this) + " " + expr.operator.lexeme() + " " + expr.right.accept(this);
     }
 
     @Override
     public String visitUnaryExpr(Expr.Unary expr) {
+        
         return expr.operator.lexeme() + expr.expression.accept(this);
     }
 
     @Override
     public String visitCallExpr(Expr.Call expr) {
+        
         StringBuilder builder = new StringBuilder();
         builder.append(expr.callee.accept(this));
         builder.append("(");
@@ -65,7 +70,14 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitGetExpr(Expr.Get expr) {
+        
+        return stringify(expr.instance) + "." + expr.property;
+    }
+
+    @Override
     public String visitFunctionExpr(Expr.Function expr) {
+        
         StringBuilder builder = new StringBuilder();
         builder.append("fun <lambda/anonymous>");
         builder.append("(");
@@ -100,7 +112,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
-    public String visitVariableExpr(Expr.Variable expr) { //Modify how AstPrinter.class access binding
+    public String visitVariableExpr(Expr.Variable expr) {
         return expr.identifier.lexeme();
     }
 
@@ -110,13 +122,13 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
-    public String visitClassDclStmt(Stmt.ClassDcl stmt) {
+    public String visitClassStmt(Stmt.Class stmt) {
         StringBuilder builder = new StringBuilder();
         builder.append("class ");
         builder.append(stmt.identifier.lexeme());
         if (concise) return builder.toString();
         builder.append("{\n");
-        for (Stmt.FunctionDcl method : stmt.methods) {
+        for (Stmt.Function method : stmt.methods) {
             builder.append("\tfun ");
             builder.append(method.identifier.lexeme());
             builder.append("(");
@@ -132,7 +144,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
-    public String visitFunctionDclStmt(Stmt.FunctionDcl stmt) {
+    public String visitFunctionStmt(Stmt.Function stmt) {
         StringBuilder builder = new StringBuilder();
         builder.append("fun ");
         builder.append(stmt.identifier.lexeme());
@@ -157,7 +169,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
-    public String visitVariableDclStmt(Stmt.VariableDcl stmt) {
+    public String visitVariableStmt(Stmt.Variable stmt) {
         return "var " + stmt.identifier.lexeme() + " = " + stmt.initializer.accept(this) + ";";
     }
 
@@ -228,3 +240,4 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return stmt.expression.accept(this) + ";";
     }
 }
+ */

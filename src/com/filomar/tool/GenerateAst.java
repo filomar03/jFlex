@@ -1,9 +1,10 @@
 package com.filomar.tool;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Arrays;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.io.IOException;
 
 public class GenerateAst {
     public static void main(String[] args) throws IOException {
@@ -13,28 +14,30 @@ public class GenerateAst {
         }
         defineAst(args[0], "com.filomar.interpreter", "Expr", Arrays.asList(
                 "Assign   : Token target, Expr expression",
-                "Logical  : Expr left, Token operator, Expr right", //introduced a new class for logical operations to allow short-circuiting without modifying Binary class code
+                "Set      : Expr instance, Token property, Expr value",
+                "Logical  : Expr left, Token operator, Expr right",
                 "Binary   : Expr left, Token operator, Expr right",
                 "Unary    : Token operator, Expr expression",
                 "Call     : Expr callee, Token locationReference, List<Expr> arguments",
-                "Function : List<Token> parameters, List<Stmt> body",
+                "Get      : Expr instance, Token property",
+                "Function   : List<Token> parameters, List<Stmt> body",
                 "Literal  : Object value",
                 "Variable : Token identifier",
                 "Grouping : Expr expression"
                 ));
         defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
                 //low-priority statements (aka: declarations)
-                "ClassDcl    : Token identifier, List<Stmt.FunctionDcl> methods",
-                "FunctionDcl : Token identifier, Expr.Function function",
-                "VariableDcl : Token identifier, Expr initializer",
+                "Class      : Token identifier, List<Stmt.Function> methods",
+                "Function   : Token identifier, Expr.Function function",
+                "Variable   : Token identifier, Expr initializer",
                 //high-priority statements (aka: statements)
-                "Block       : List<Stmt> statements",
-                "Break       : Token keyword",
-                "If          : Expr condition, Stmt thenBranch, Stmt elseBranch",
-                "Print       : Expr expression",
-                "Return      : Token keyword, Expr expression",
-                "While       : Expr condition, Stmt body",
-                "Expression  : Expr expression"
+                "Block      : List<Stmt> statements",
+                "Break      : Token keyword",
+                "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
+                "Print      : Expr expression",
+                "Return     : Token keyword, Expr expression",
+                "While      : Expr condition, Stmt body",
+                "Expression : Expr expression"
                 ));
     }
 
@@ -94,11 +97,11 @@ public class GenerateAst {
         writer.println("\t\t}\n");
 
         //Creates useful strings representation of AST nodes for the debugger, see AstPrinter.class
-        writer.println("\t\t@Override");
+        /* writer.println("\t\t@Override");
         writer.println("\t\tpublic String toString() {");
-        writer.println("\t\t\treturn Flex.debugAstPrinter().stringify(this);");
-        writer.println("\t\t}");
+        writer.println("\t\t\treturn Flex.getDbgAstPrinter().stringify(this);");
+        writer.println("\t\t}"); */
 
-        writer.println("\t}\n");
+        writer.println("\t}\n"); 
     }
 }

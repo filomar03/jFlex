@@ -4,9 +4,9 @@ import java.util.List;
 
 abstract class Stmt {
 	interface Visitor<R> {
-		R visitClassDclStmt(ClassDcl stmt);
-		R visitFunctionDclStmt(FunctionDcl stmt);
-		R visitVariableDclStmt(VariableDcl stmt);
+		R visitClassStmt(Class stmt);
+		R visitFunctionStmt(Function stmt);
+		R visitVariableStmt(Variable stmt);
 		R visitBlockStmt(Block stmt);
 		R visitBreakStmt(Break stmt);
 		R visitIfStmt(If stmt);
@@ -18,64 +18,52 @@ abstract class Stmt {
 
 	abstract <R> R accept(Visitor<R> visitor);
 
-	static class ClassDcl extends Stmt {
+	static class Class extends Stmt {
 		final Token identifier;
-		final List<Stmt.FunctionDcl> methods;
+		final List<Stmt.Function> methods;
 
-		ClassDcl(Token identifier, List<Stmt.FunctionDcl> methods) {
+		Class(Token identifier, List<Stmt.Function> methods) {
 			this.identifier = identifier;
 			this.methods = methods;
 		}
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitClassDclStmt(this);
+			return visitor.visitClassStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
-	static class FunctionDcl extends Stmt {
+	static class Function extends Stmt {
 		final Token identifier;
 		final Expr.Function function;
 
-		FunctionDcl(Token identifier, Expr.Function function) {
+		Function(Token identifier, Expr.Function function) {
 			this.identifier = identifier;
 			this.function = function;
 		}
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitFunctionDclStmt(this);
+			return visitor.visitFunctionStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
-	static class VariableDcl extends Stmt {
+	static class Variable extends Stmt {
 		final Token identifier;
 		final Expr initializer;
 
-		VariableDcl(Token identifier, Expr initializer) {
+		Variable(Token identifier, Expr initializer) {
 			this.identifier = identifier;
 			this.initializer = initializer;
 		}
 
 		@Override
 		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitVariableDclStmt(this);
+			return visitor.visitVariableStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Block extends Stmt {
@@ -90,10 +78,6 @@ abstract class Stmt {
 			return visitor.visitBlockStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Break extends Stmt {
@@ -108,10 +92,6 @@ abstract class Stmt {
 			return visitor.visitBreakStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class If extends Stmt {
@@ -130,10 +110,6 @@ abstract class Stmt {
 			return visitor.visitIfStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Print extends Stmt {
@@ -148,10 +124,6 @@ abstract class Stmt {
 			return visitor.visitPrintStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Return extends Stmt {
@@ -168,10 +140,6 @@ abstract class Stmt {
 			return visitor.visitReturnStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class While extends Stmt {
@@ -188,10 +156,6 @@ abstract class Stmt {
 			return visitor.visitWhileStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Expression extends Stmt {
@@ -206,10 +170,6 @@ abstract class Stmt {
 			return visitor.visitExpressionStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 }

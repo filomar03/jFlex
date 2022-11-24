@@ -5,10 +5,12 @@ import java.util.List;
 abstract class Expr {
 	interface Visitor<R> {
 		R visitAssignExpr(Assign expr);
+		R visitSetExpr(Set expr);
 		R visitLogicalExpr(Logical expr);
 		R visitBinaryExpr(Binary expr);
 		R visitUnaryExpr(Unary expr);
 		R visitCallExpr(Call expr);
+		R visitGetExpr(Get expr);
 		R visitFunctionExpr(Function expr);
 		R visitLiteralExpr(Literal expr);
 		R visitVariableExpr(Variable expr);
@@ -31,10 +33,24 @@ abstract class Expr {
 			return visitor.visitAssignExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
+	}
+
+	static class Set extends Expr {
+		final Expr instance;
+		final Token property;
+		final Expr value;
+
+		Set(Expr instance, Token property, Expr value) {
+			this.instance = instance;
+			this.property = property;
+			this.value = value;
 		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitSetExpr(this);
+		}
+
 	}
 
 	static class Logical extends Expr {
@@ -53,10 +69,6 @@ abstract class Expr {
 			return visitor.visitLogicalExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Binary extends Expr {
@@ -75,10 +87,6 @@ abstract class Expr {
 			return visitor.visitBinaryExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Unary extends Expr {
@@ -95,10 +103,6 @@ abstract class Expr {
 			return visitor.visitUnaryExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Call extends Expr {
@@ -117,10 +121,22 @@ abstract class Expr {
 			return visitor.visitCallExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
+	}
+
+	static class Get extends Expr {
+		final Expr instance;
+		final Token property;
+
+		Get(Expr instance, Token property) {
+			this.instance = instance;
+			this.property = property;
 		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitGetExpr(this);
+		}
+
 	}
 
 	static class Function extends Expr {
@@ -137,10 +153,6 @@ abstract class Expr {
 			return visitor.visitFunctionExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Literal extends Expr {
@@ -155,10 +167,6 @@ abstract class Expr {
 			return visitor.visitLiteralExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Variable extends Expr {
@@ -173,10 +181,6 @@ abstract class Expr {
 			return visitor.visitVariableExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 	static class Grouping extends Expr {
@@ -191,10 +195,6 @@ abstract class Expr {
 			return visitor.visitGroupingExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.debugAstPrinter().stringify(this);
-		}
 	}
 
 }

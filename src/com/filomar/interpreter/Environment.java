@@ -22,7 +22,6 @@ public class Environment {
     Environment getAncestor(int distance) {
         Environment environment = this;
         for (int i = 0; i < distance; i++) {
-            assert environment != null : "[ERROR] Cannot find environment specified by resolver";
             environment = environment.parent;
         }
 

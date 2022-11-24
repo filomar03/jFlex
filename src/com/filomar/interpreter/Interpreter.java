@@ -35,7 +35,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
             @Override
             public String toString() {
-                return "<native fun> clock";
+                return "(native fun)clock";
             }
         });
     }
@@ -76,7 +76,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     //--Visitor pattern implementations (declarations)
     @Override
-    public Void visitClassDclStmt(Stmt.ClassDcl stmt) {
+    public Void visitClassStmt(Stmt.Class stmt) {
         environment.create(stmt.identifier.lexeme(), null);
         FlexClass klass = new FlexClass(stmt.identifier.lexeme());
         environment.assign(stmt.identifier, klass);
@@ -84,13 +84,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Void visitFunctionDclStmt(Stmt.FunctionDcl stmt) {
-        environment.create(stmt.identifier.lexeme(), new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment));
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+        environment.create(stmt.identifier.lexeme(), null);
+        FlexFunction function = new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment);
+        environment.assign(stmt.identifier, function);
         return null;
     }
 
     @Override
-    public Void visitVariableDclStmt(Stmt.VariableDcl stmt) {
+    public Void visitVariableStmt(Stmt.Variable stmt) {
         environment.create(stmt.identifier.lexeme(), stmt.initializer != null ? evaluate(stmt.initializer) : null);
         return null;
     }
@@ -166,6 +168,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitSetExpr(Expr.Set expr) {
+        Object object = evaluate(expr.instance);
+
+        if (object instanceof FlexInstance instance) {
+            Object value = evaluate(expr.value);
+            instance.set(expr.property, value);
+            return value;
+        }
+
+        throw new RuntimeError(expr.property, "Cannot set propriety of an object that is not an instance (Non dovrebbe succedere, in quanto lerrore dovrebbe essere gia dato da GetExpr)");
+    }
+
+    @Override
     public Object visitLogicalExpr(Expr.Logical expr) {
         Object left = evaluate(expr.left);
 
@@ -178,6 +193,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (isTruth(left))
                     return left;
             }
+            default -> {}
         }
 
         return evaluate(expr.right);
@@ -206,48 +222,48 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 return (double) left - (double) right;
             }
             case PLUS -> {
-                if (left instanceof Double && right instanceof Double) {
-                    return (double) left + (double) right;
+                if (left instanceof Double a && right instanceof Double b) {
+                    return a + b;
                 }
 
                 return stringify(left) + stringify(right);
             }
             case GREATER -> {
-                if (left instanceof String)
-                    left = (double) ((String) left).length();
+                if (left instanceof String a)
+                    left = a.length();
 
-                if (right instanceof String)
-                    right = (double) ((String) right).length();
+                if (right instanceof String b)
+                    right = b.length();
 
                 checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
                 return (double) left > (double) right;
             }
             case GREATER_EQUAL -> {
-                if (left instanceof String)
-                    left = (double) ((String) left).length();
+                if (left instanceof String a)
+                    left = a.length();
 
-                if (right instanceof String)
-                    right = (double) ((String) right).length();
+                if (right instanceof String b)
+                    right = b.length();
 
                 checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
                 return (double) left >= (double) right;
             }
             case LESS -> {
-                if (left instanceof String)
-                    left = (double) ((String) left).length();
+                if (left instanceof String a)
+                    left = a.length();
 
-                if (right instanceof String)
-                    right = (double) ((String) right).length();
+                if (right instanceof String b)
+                    right = b.length();
 
                 checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
                 return (double) left < (double) right;
             }
             case LESS_EQUAL -> {
-                if (left instanceof String)
-                    left = (double) ((String) left).length();
+                if (left instanceof String a)
+                    left = a.length();
 
-                if (right instanceof String)
-                    right = (double) ((String) right).length();
+                if (right instanceof String b)
+                    right = b.length();
 
                 checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
                 return (double) left <= (double) right;
@@ -258,9 +274,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             case EQUAL_EQUAL -> {
                 return isEqual(left, right);
             }
+            default -> throw new IllegalArgumentException("Unexpected value: " + expr.operator.type());
         }
-
-        return null;
     }
 
     @Override
@@ -272,12 +287,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 return !isTruth(expression);
             }
             case MINUS -> {
-                checkNumericOperand(expr.operator, "All operands must be numbers", expr.expression);
-                return -(Double) expression;
+                checkNumericOperand(expr.operator, "Operand must be number", expr.expression);
+                return -(double) expression;
             }
+            default -> throw new IllegalArgumentException("Unexpected value: " + expr.operator.type());
         }
-
-        return null;
     }
 
     @Override
@@ -289,24 +303,35 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             args.add(evaluate(arg));
         }
 
-        if (!(callee instanceof FlexCallable)) {
+        if (!(callee instanceof FlexCallable callable)) {
             throw new RuntimeError(expr.locationReference, "Callee cannot be called, only function and classes can be called");
         }
 
-        if (args.size() != ((FlexCallable) callee).arity()) {
-            throw new RuntimeError(expr.locationReference, "Expected " + ((FlexCallable) callee).arity() + " argument/s, found " + args.size());
+        if (args.size() != callable.arity()) {
+            throw new RuntimeError(expr.locationReference, "Expected " + callable.arity() + " argument/s, found " + args.size());
         }
 
         try {
-            return ((FlexCallable) callee).call(this, args);
-        } catch (ReturnEx returnEx) {
-            return returnEx.value;
+            return callable.call(this, args);
+        } catch (ReturnEx ex) {
+            return ex.value;
         }
     }
 
     @Override
+    public Object visitGetExpr(Expr.Get expr) {
+        Object object = evaluate(expr.instance);
+
+        if (object instanceof FlexInstance instance) {
+            return instance.get(expr.property);
+        }
+        
+        throw new RuntimeError(expr.property, "Trying to retrieve a property from an object that is not an instance");
+    }
+
+    @Override
     public Object visitFunctionExpr(Expr.Function expr) {
-        return new FlexFunction("(anonymous)", expr, environment);
+        return new FlexFunction("(anonym fun)", expr, environment);
     }
 
     @Override

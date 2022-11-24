@@ -1,4 +1,16 @@
-class ClasseDiProva {
+fun createCounter() {
+    var i = 0;
+    fun inc() {
+        i = i + 1;
+        return i;
+    }
+
+    return inc;
 }
 
-print ClasseDiProva;
+var incCounter = createCounter();
+print incCounter();
+print incCounter();
+print incCounter();
+print incCounter();
+print incCounter();

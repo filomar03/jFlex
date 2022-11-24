@@ -1,11 +1,11 @@
 package com.filomar.interpreter;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.charset.Charset;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.List;
 
 public class Flex {
@@ -22,7 +22,7 @@ public class Flex {
         else if (args.length == 1)
             runFile(args[0]);
         else {
-            System.out.println("Usage: jflex <script>");
+            System.out.println("Usage: Flex <script>");
             System.exit(64);
         }
     }
@@ -67,27 +67,25 @@ public class Flex {
 
     //--Error handling
     static void onErrorDetected(int line, int column, String message) {
-        notifyError(line, column, message);
         hadError = true;
+        notifyError(line, column, message);
     }
 
     static void onErrorDetected(Token token, String message) {
-        notifyError(token.line(), token.column(), message);
         hadError = true;
+        notifyError(token.line(), token.column(), message);
     }
 
     static void onRuntimeError(RuntimeError error) {
-        notifyError(error.token.line(), error.token.column(), error.getMessage());
         hadRuntimeError = true;
+        notifyError(error.token.line(), error.token.column(), error.getMessage());
     }
 
-    private static void notifyError(int line, int column, String message) {
+    private static void notifyError(int line, int column, String message) { 
         System.err.println("[" + line + ":" + column + "] ERROR: " + message);
     }
 
     //Debug utility
-    public static AstPrinter astPrinter = new AstPrinter(true);
-    public static AstPrinter debugAstPrinter() {
-        return astPrinter;
-    }
+    /* public static AstPrinter astPrinter = new AstPrinter();
+    public static AstPrinter getDbgAstPrinter() { return astPrinter; } */
 }

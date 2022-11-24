@@ -1,8 +1,8 @@
 package com.filomar.interpreter;
 
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static com.filomar.interpreter.TokenType.*;
 
@@ -32,10 +32,10 @@ public class Parser {
     //--Declarations parsing
     private Stmt declaration() {
         try {
-            if (match(CLASS)) return classDclStmt();
-            if (check(current(), FUN) && check(next(), IDENTIFIER)) {
-                consume(FUN, "This error should never be thrown");
-                return functionDclStmt();
+            if (match(CLASS)) return classStmt();
+            if (check(FUN) && checkNext(IDENTIFIER)) {
+                advance();
+                return functionStmt();
             }
             if (match(VAR)) return varDclStmt();
             return statement();
@@ -45,40 +45,40 @@ public class Parser {
         }
     }
 
-    private Stmt classDclStmt() {
-        Token identifier = consume(IDENTIFIER, "Expected a valid class name after keyword class");
-        consume(LEFT_BRACE, "Expected opening bracket after class declaration");
+    private Stmt classStmt() {
+        Token identifier = consume(IDENTIFIER, "Expected a valid class name");
+        consume(LEFT_BRACE, "Expected opening brace");
 
-        List<Stmt.FunctionDcl> methods = new ArrayList<>();
+        List<Stmt.Function> methods = new ArrayList<>();
         while (match(FUN)) {
-            methods.add(new Stmt.FunctionDcl(consume(IDENTIFIER, "Expected a valid name when declaring a method"), functionDefinition()));
+            Token name = consume(IDENTIFIER, "Expected a valid method name");
+            methods.add(new Stmt.Function(name, functionDefinition()));
         }
 
-        consume(RIGHT_BRACE, "Expected '}' after class body");
-        return new Stmt.ClassDcl(identifier, methods);
+        consume(RIGHT_BRACE, "Expected closing brace");
+        return new Stmt.Class(identifier, methods);
     }
 
-    private Stmt functionDclStmt() {
-        Token identifier = consume(IDENTIFIER, "This error should never be thrown");
-
-        return new Stmt.FunctionDcl(identifier, functionDefinition());
+    private Stmt functionStmt() {
+        Token identifier = advance();
+        return new Stmt.Function(identifier, functionDefinition());
     }
 
     private Expr.Function functionDefinition() {
-        consume(LEFT_PAREN, "Expected '(' after function/method declaration");
+        consume(LEFT_PAREN, "Expected opening paren");
         List<Token> parameters = new ArrayList<>();
         if (!match(RIGHT_PAREN)) {
             do {
                 if (parameters.size() < 255) {
-                    parameters.add(consume(IDENTIFIER, "Expected a valid parameter name"));
+                    parameters.add(consume(IDENTIFIER, "Expected a valid parameter"));
                 } else {
-                    throw error(current(), "Function/method definitions cannot have more than 255 parameters");
+                    throw error(current(), "Function/Method definitions cannot have more than 255 parameters");
                 }
             } while (match(COMMA));
-            consume(RIGHT_PAREN, "Expected ')' after parameters");
+            consume(RIGHT_PAREN, "Expected closing paren");
         }
 
-        consume(LEFT_BRACE, "Expect '{' before function/method body");
+        consume(LEFT_BRACE, "Expect opening brace");
         List<Stmt> body = blockCollector();
 
         return new Expr.Function(parameters, body);
@@ -92,9 +92,9 @@ public class Parser {
             initializer = expression();
         }
 
-        consume(SEMICOLON, "Expected ';' at the end of a statement");
+        consume(SEMICOLON, "Expected semicolon");
 
-        return new Stmt.VariableDcl(identifier, initializer);
+        return new Stmt.Variable(identifier, initializer);
     }
 
     //--Statements parsing
@@ -114,17 +114,17 @@ public class Parser {
         while (current().type() != RIGHT_BRACE && !isAtEnd()) {
             statements.add(declaration());
         }
-        consume(RIGHT_BRACE, "Expected '}' at the end of a block statement");
+        consume(RIGHT_BRACE, "Expected closing brace");
         return statements;
     }
 
     private Stmt breakStmt() {
-        consume(SEMICOLON, "Expected ';' at the end of a statement");
+        consume(SEMICOLON, "Expected semicolon");
         return new Stmt.Break(previous());
     }
 
-    private Stmt forStmt() { //Syntactic sugar, parsed as a 'WHILE' --> see scripts/for_loop_issue.flx
-        consume(LEFT_PAREN, "Expected '(' before condition");
+    private Stmt forStmt() { //Syntactic sugar, parsed as a 'WHILE'
+        consume(LEFT_PAREN, "Expected opening paren");
 
         Stmt initializer;
         if (match(SEMICOLON)) {
@@ -138,13 +138,13 @@ public class Parser {
         Expr condition = null;
         if (!match(SEMICOLON)) {
             condition = expression();
-            consume(SEMICOLON, "Expected ';' after condition");
+            consume(SEMICOLON, "Expected semicolon");
         }
 
         Expr increment = null;
         if (!match(RIGHT_PAREN)) {
             increment = expression();
-            consume(RIGHT_PAREN, "Expected ')' after update");
+            consume(RIGHT_PAREN, "Expected closing paren");
         }
 
         Stmt body = statement();
@@ -169,9 +169,9 @@ public class Parser {
     }
 
     private Stmt ifStmt() {
-        consume(LEFT_PAREN, "Expected '(' before condition");
+        consume(LEFT_PAREN, "Expected opening paren");
         Expr condition = expression();
-        consume(RIGHT_PAREN, "Expected ')' after condition");
+        consume(RIGHT_PAREN, "Expected closing paren");
 
         Stmt thenBranch = statement();
         Stmt elseBranch = null;
@@ -184,7 +184,7 @@ public class Parser {
 
     private Stmt printStmt() {
         Expr value = expression();
-        consume(SEMICOLON, "Expected ';' at the end of a statement");
+        consume(SEMICOLON, "Expected semicolon");
         return new Stmt.Print(value);
     }
 
@@ -192,15 +192,15 @@ public class Parser {
         Expr value = null;
         if (!match(SEMICOLON)) {
             value = expression();
-            consume(SEMICOLON, "Expected ';' at the end of a statement");
+            consume(SEMICOLON, "Expected semicolon");
         }
         return new Stmt.Return(previous(), value);
     }
 
     private Stmt whileStmt() {
-        consume(LEFT_PAREN, "Expected '(' before condition");
+        consume(LEFT_PAREN, "Expected opening paren");
         Expr condition = expression();
-        consume(RIGHT_PAREN, "Expected ')' after condition");
+        consume(RIGHT_PAREN, "Expected closing paren");
 
         Stmt body = statement();
         return new Stmt.While(condition, body);
@@ -208,7 +208,7 @@ public class Parser {
 
     private Stmt expressionStmt() {
         Expr expr = expression();
-        consume(SEMICOLON, "Expected ';' at the end of a statement");
+        consume(SEMICOLON, "Expected semicolon");
         return new Stmt.Expression(expr);
     }
 
@@ -221,14 +221,16 @@ public class Parser {
         Expr expr = logicalOrExpr();
 
         if (match(EQUAL)) {
-            Token op = previous();
+            Token ref = previous();
             Expr right = assignmentExpr();
 
-            if (expr instanceof Expr.Variable) {
-                return new Expr.Assign(((Expr.Variable) expr).identifier, right);
+            if (expr instanceof Expr.Variable var) {
+                return new Expr.Assign(var.identifier, right);
+            } else if (expr instanceof Expr.Get get) {
+                return new Expr.Set(get.instance, get.property, right);
             }
 
-            throw error(op, "Invalid assignment target");
+            throw error(ref, "Invalid assignment target");
         }
 
         return expr;
@@ -321,7 +323,7 @@ public class Parser {
 
         while (true) {
             if (match(LEFT_PAREN)) {
-                Token locationRef = previous();
+                Token ref = previous();
                 List<Expr> arguments = new ArrayList<>();
                 if (!match(RIGHT_PAREN)) {
                     do {
@@ -331,11 +333,12 @@ public class Parser {
                             throw error(current(), "Calls cannot have more than 255 arguments");
                         }
                     } while (match(COMMA));
-
-                    consume(RIGHT_PAREN, "Expected ')' after arguments");
+                    consume(RIGHT_PAREN, "Expected closing paren");
                 }
-
-                expr = new Expr.Call(expr, locationRef, arguments);
+                expr = new Expr.Call(expr, ref, arguments);
+            } else if (match(DOT)) {
+                Token name = consume(IDENTIFIER, "Expected property name or method call");
+                expr = new Expr.Get(expr, name);
             } else {
                 break;
             }
@@ -353,7 +356,7 @@ public class Parser {
         if (match(FUN)) return functionDefinition();
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
-            consume(RIGHT_PAREN, "Expected ')' after the expression");
+            consume(RIGHT_PAREN, "Expected closing paren");
             return new Expr.Grouping(expr);
         }
 
@@ -366,7 +369,7 @@ public class Parser {
         return new ParseError();
     }
 
-    private void synchronize() { //reports a lot of weird errors
+    private void synchronize() {
         if (!isAtEnd())
             advance();
 
@@ -375,9 +378,8 @@ public class Parser {
 
             switch (current().type()) {
                 case CLASS, FUN, FOR, IF, PRINT, RETURN, VAR, WHILE -> { return; }
+                default -> advance();
             }
-
-            advance();
         }
     }
 
@@ -391,7 +393,7 @@ public class Parser {
     private boolean match(TokenType... types) { //EOF safe
         if (isAtEnd()) return false;
         for (TokenType type : types) {
-            if (check(current(), type)) {
+            if (check(type)) {
                 advance();
                 return true;
             }
@@ -399,8 +401,12 @@ public class Parser {
         return false;
     }
 
-    private boolean check(Token token, TokenType type) { //EOF safe
-        return token.type() == type;
+    private boolean check(TokenType type) { //EOF safe
+        return current().type() == type;
+    }
+
+    private boolean checkNext(TokenType type) { //EOF safe
+        return next().type() == type;
     }
 
     private Token advance() { //EOF safe
