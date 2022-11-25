@@ -8,9 +8,14 @@ fun createCounter() {
     return inc;
 }
 
-var incCounter = createCounter();
-print incCounter();
-print incCounter();
-print incCounter();
-print incCounter();
-print incCounter();
+var counter1 = createCounter();
+print counter1();
+print counter1();
+print counter1();
+var counter2 = createCounter();
+print counter2();
+print counter2();
+print counter2();
+print counter2();
+print counter2();
+print counter2();

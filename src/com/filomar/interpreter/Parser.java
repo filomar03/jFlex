@@ -370,8 +370,7 @@ public class Parser {
     }
 
     private void synchronize() {
-        if (!isAtEnd())
-            advance();
+        advance();
 
         while (!isAtEnd()) {
             if (previous().type() == SEMICOLON) return;
@@ -391,7 +390,6 @@ public class Parser {
     }
 
     private boolean match(TokenType... types) { //EOF safe
-        if (isAtEnd()) return false;
         for (TokenType type : types) {
             if (check(type)) {
                 advance();
@@ -401,16 +399,16 @@ public class Parser {
         return false;
     }
 
-    private boolean check(TokenType type) { //EOF safe
-        return current().type() == type;
-    }
-
     private boolean checkNext(TokenType type) { //EOF safe
         return next().type() == type;
     }
 
+    private boolean check(TokenType type) { //EOF safe
+        return current().type() == type;
+    }
+
     private Token advance() { //EOF safe
-        if (!isAtEnd()) current++;
+        if (!isAtEnd()) return tokens.get(current++);
         return current();
     }
 
@@ -423,7 +421,8 @@ public class Parser {
         return tokens.get(current + 1);
     }
 
-    private Token previous() { //not EOF safe
+    private Token previous() { //EOF safe
+        if (current == 0) return current();
         return tokens.get(current - 1);
     }
 
