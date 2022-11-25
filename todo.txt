@@ -2,4 +2,3 @@ differenziare static errors da runtime errors [Flex.java]
 provare a mettere inizializer e update di loop nello stesso environment [Parser.java]
 sistemare messaggi d'errore e coordinate riportate quando segnalati [Parser.java, Interpreter.java, Environment.java, Resolver.java, FlexInstance.java]
 eliminare campi non necessari dalle varie classi Expr e Stmt (es. convertire da token a string quando non e' necessario per riportare errori) [GenerateAst.java]
-riscirvere AstPrinter.java

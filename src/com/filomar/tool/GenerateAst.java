@@ -20,7 +20,7 @@ public class GenerateAst {
                 "Unary    : Token operator, Expr expression",
                 "Call     : Expr callee, Token locationReference, List<Expr> arguments",
                 "Get      : Expr instance, Token property",
-                "Function   : List<Token> parameters, List<Stmt> body",
+                "Function : List<Token> parameters, List<Stmt> body",
                 "Literal  : Object value",
                 "Variable : Token identifier",
                 "Grouping : Expr expression"
@@ -96,11 +96,12 @@ public class GenerateAst {
         writer.println("\t\t\treturn visitor.visit" + className + baseName + "(this);");
         writer.println("\t\t}\n");
 
+        //Debug purpose only, remove on final build
         //Creates useful strings representation of AST nodes for the debugger, see AstPrinter.class
-        /* writer.println("\t\t@Override");
+        /*writer.println("\t\t@Override");
         writer.println("\t\tpublic String toString() {");
-        writer.println("\t\t\treturn Flex.getDbgAstPrinter().stringify(this);");
-        writer.println("\t\t}"); */
+        writer.println("\t\t\treturn Flex.getAstPrinter().stringify(this);");
+        writer.println("\t\t}");*/
 
         writer.println("\t}\n"); 
     }

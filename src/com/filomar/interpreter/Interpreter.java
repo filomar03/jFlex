@@ -377,9 +377,10 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private String stringify(Object a) {
         if (a == null) return "null";
-        if (a instanceof Double) {
-            if ((double) a % 1 == 0) {
-                String str = a.toString();
+        if (a instanceof String str) return '"' + str + '"';
+        if (a instanceof Double n) {
+            if (n % 1 == 0) {
+                String str = n.toString();
                 return str.substring(0, str.length() - 2);
             }
         }

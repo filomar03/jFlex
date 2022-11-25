@@ -52,8 +52,18 @@ public class Flex {
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
+
+        System.err.println("[DEBUG] printing scanned tokens...\n"); //Debug purpose only, remove on final build
+        tokens.forEach(System.err::println); //Debug purpose only, remove on final build
+        System.err.println("\n" + "-".repeat(100)); //Debug purpose only, remove on final build
+
         Parser parser = new Parser(tokens);
         List<Stmt> statements = parser.parse();
+
+        System.err.println("\n\n[DEBUG] printing parsed statements..."); //Debug purpose only, remove on final build
+        statements.forEach(x -> System.err.println("\n" + getAstPrinter().stringify(x))); //Debug purpose only, remove on final build
+        System.err.println("\n" + "-".repeat(100)); //Debug purpose only, remove on final build
+        System.err.println("\n\n"); //Debug purpose only, remove on final build
 
         if (hadError) return;
 
@@ -85,7 +95,7 @@ public class Flex {
         System.err.println("[" + line + ":" + column + "] ERROR: " + message);
     }
 
-    //Debug utility
-    /* public static AstPrinter astPrinter = new AstPrinter();
-    public static AstPrinter getDbgAstPrinter() { return astPrinter; } */
+    //Debug purpose only, remove on final build
+    public static AstPrinter astPrinter = new AstPrinter();
+    public static AstPrinter getAstPrinter() { return astPrinter; }
 }

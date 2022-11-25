@@ -1,18 +1,59 @@
 /*
-    This class stringify AST nodes
-        Override toString() methods of Expr.class and Stmt.class with these to gather useful string when using the debugger.
+    This class stringify AbstractSyntaxTree nodes
+        Override toString() methods of all Expr.class and Stmt.class subclasses with the following to gather useful string when using the debugger.
         Example:
             @Override
             public String toString() {
                 return Flex.debugAstPrinter().stringify(this);
             }
-
-    Remove stringify, since when concatenating strings java implicitly calls toString methods, that's already been overrided in Expr e Stmt classes
 */
 
-/* package com.filomar.interpreter;
+package com.filomar.interpreter;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Iterator;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
+    //Nested classes
+    private static class AstStringFormatter {
+        private static final String trunk = "|";
+        private static final String branch = "--";
+        private static final String nodePrefix = trunk.concat(branch);
+
+        static String generatePrefix(String attribute, boolean goingBelow) {
+            return (goingBelow ? "|" : " ") + " ".repeat(nodePrefix.length() + attribute.length() + 1);
+        }
+
+        static String applyPrefix(String source, String prefix) {
+            return source.replace("\n", "\n".concat(prefix));
+        }
+
+        static String formatBaseNode(String nodeName, String nodeValue) {
+            return nodeName + ": " + nodeValue;
+        }
+
+        static String formatCompoundNode(String nodeName, List<String> nodeAttributes, List<String> nodeValues) {
+            StringBuilder builder = new StringBuilder();
+
+            Iterator<String> attributesIterator = nodeAttributes.iterator();
+            Iterator<String> valuesIterator = nodeValues.iterator();
+
+            builder.append(nodeName).append(":");
+            while (attributesIterator.hasNext() && valuesIterator.hasNext()) {
+                String currentAttribute = attributesIterator.next();
+                String currentValue = valuesIterator.next();
+                currentValue = applyPrefix(currentValue, generatePrefix(currentAttribute, valuesIterator.hasNext()));
+                
+                builder.append("\n").append(nodePrefix).append(currentAttribute).append(": ").append(currentValue);
+            }
+
+            return builder.toString();
+        }
+    }
+
     //Methods
     //--Visitor pattern type matching
     String stringify(Expr expr) {
@@ -23,221 +64,294 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return stmt.accept(this);
     }
 
-    //--Visitor pattern implementations
-    @Override
-    public String visitAssignExpr(Expr.Assign expr) {
-        
-        return expr.target.lexeme() + " = " + expr.expression.accept(this);
+    String stringify(Token token) { //helper method to stringify tokens inside lists
+        return token.lexeme();
     }
 
-    @Override
-    public String visitSetExpr(Expr.Set expr) {
-        
-        return expr.instance.accept(this) + " = " + expr.property.lexeme();
-    }
-    
-    @Override
-    public String visitLogicalExpr(Expr.Logical expr) {
-        
-        return expr.left.accept(this) + " " + expr.operator.lexeme() + " " + expr.right.accept(this);
-    }
-
-    @Override
-    public String visitBinaryExpr(Expr.Binary expr) {
-        
-        return expr.left.accept(this) + " " + expr.operator.lexeme() + " " + expr.right.accept(this);
+    <R> String stringify(List<R> list) { //helper method to stringify lists
+        return AstStringFormatter.formatCompoundNode("List",
+                IntStream.range(0, list.size()).boxed().map(Object::toString).toList(),
+                list.stream().map(r -> {
+                    if (r instanceof Expr expr) return stringify(expr);
+                    else if (r instanceof Stmt stmt) return stringify(stmt);
+                    else if (r instanceof Token token) return stringify(token);
+                    throw new IllegalArgumentException("Unexpected value: " + r);
+                }).toList());
     }
 
-    @Override
-    public String visitUnaryExpr(Expr.Unary expr) {
-        
-        return expr.operator.lexeme() + expr.expression.accept(this);
-    }
-
-    @Override
-    public String visitCallExpr(Expr.Call expr) {
-        
-        StringBuilder builder = new StringBuilder();
-        builder.append(expr.callee.accept(this));
-        builder.append("(");
-        for (Expr arg : expr.arguments) {
-            builder.append(arg.accept(this));
-            if (!arg.equals(expr.arguments.get(expr.arguments.size() - 1)))
-                builder.append(", ");
-        }
-        builder.append(")");
-        return builder.toString();
-    }
-
-    @Override
-    public String visitGetExpr(Expr.Get expr) {
-        
-        return stringify(expr.instance) + "." + expr.property;
-    }
-
-    @Override
-    public String visitFunctionExpr(Expr.Function expr) {
-        
-        StringBuilder builder = new StringBuilder();
-        builder.append("fun <lambda/anonymous>");
-        builder.append("(");
-        for (Token param : expr.parameters) {
-            builder.append(param.lexeme());
-            if (!param.equals(expr.parameters.get(expr.parameters.size() - 1)))
-                builder.append(", ");
-        }
-        builder.append(")");
-        if (!concise) {
-            builder.append(" {\n");
-            for (Stmt stmt : expr.body) {
-                builder.append("\t");
-                builder.append(stmt.accept(this));
-                builder.append("\n");
-            }
-            builder.append("}");
-        }
-        return builder.toString();
-    }
-
+    //--Visitor pattern implementations (Expr)
+    //----Base cases
     @Override
     public String visitLiteralExpr(Expr.Literal expr) {
-        if (expr.value == null) return "null";
-        if (expr.value instanceof Double) {
-            if ((double) expr.value % 1 == 0) {
-                String str = expr.value.toString();
-                return str.substring(0, str.length() - 2);
-            }
+        String value;
+
+        if (expr.value == null) value = "null";
+        else if (expr.value instanceof String str) value = '"' + str + '"';
+        else if (expr.value instanceof Double n) {
+            if (n % 1 == 0) {
+                String str = n.toString();
+                value = str.substring(0, str.length() - 2);
+            } else value = expr.value.toString();
         }
-        return '"' + expr.value.toString() + '"';
+        else value = expr.value.toString();
+
+        return AstStringFormatter.formatBaseNode("Expr.Literal", value);
     }
 
     @Override
     public String visitVariableExpr(Expr.Variable expr) {
-        return expr.identifier.lexeme();
+        return AstStringFormatter.formatBaseNode("Expr.Variable", expr.identifier.lexeme());
+    }
+
+    //----Non base cases
+    @Override
+    public String visitAssignExpr(Expr.Assign expr) {
+        return AstStringFormatter.formatCompoundNode("Expr.Assign",
+                Arrays.asList(
+                        "target",
+                        "expression"
+                ),
+                Arrays.asList(
+                        stringify(expr.target),
+                        stringify(expr.expression)
+                )
+        );
+    }
+
+    @Override
+    public String visitSetExpr(Expr.Set expr) {
+        return AstStringFormatter.formatCompoundNode("Expr.Set",
+                Arrays.asList(
+                        "instance",
+                        "property",
+                        "value"
+                ),
+                Arrays.asList(
+                        stringify(expr.instance),
+                        stringify(expr.property),
+                        stringify(expr.value)
+                )
+        );
+    }
+
+    @Override
+    public String visitLogicalExpr(Expr.Logical expr) {
+        return AstStringFormatter.formatCompoundNode("Expr.Logical",
+                Arrays.asList(
+                        "left",
+                        "operator",
+                        "right"
+                ),
+                Arrays.asList(
+                        stringify(expr.left),
+                        stringify(expr.operator),
+                        stringify(expr.right)
+                )
+        );
+    }
+
+    @Override
+    public String visitBinaryExpr(Expr.Binary expr) {
+        return AstStringFormatter.formatCompoundNode("Expr.Binary",
+                Arrays.asList(
+                        "left",
+                        "operator",
+                        "right"
+                ),
+                Arrays.asList(
+                        stringify(expr.left),
+                        stringify(expr.operator),
+                        stringify(expr.right)
+                )
+        );
+    }
+
+    @Override
+    public String visitUnaryExpr(Expr.Unary expr) {
+        return AstStringFormatter.formatCompoundNode("Expr.Unary",
+                Arrays.asList(
+                        "operator",
+                        "expression"
+                ),
+                Arrays.asList(
+                        stringify(expr.operator),
+                        stringify(expr.expression)
+                )
+        );
+    }
+
+    @Override
+    public String visitCallExpr(Expr.Call expr) {
+        return AstStringFormatter.formatCompoundNode("Expr.Call",
+                Arrays.asList(
+                        "callee",
+                        "arguments"
+                ),
+                Arrays.asList(
+                        stringify(expr.callee),
+                        stringify(expr.arguments)
+                )
+        );
+    }
+
+    @Override
+    public String visitGetExpr(Expr.Get expr) {
+        return AstStringFormatter.formatCompoundNode("Expr.Get",
+                Arrays.asList(
+                        "instance",
+                        "property"
+                ),
+                Arrays.asList(
+                        stringify(expr.instance),
+                        stringify(expr.property)
+                )
+        );
+    }
+
+    @Override
+    public String visitFunctionExpr(Expr.Function expr) {
+        return AstStringFormatter.formatCompoundNode("Expr.Function",
+                Arrays.asList(
+                        "parameters",
+                        "body"
+                ),
+                Arrays.asList(
+                        stringify(expr.parameters),
+                        stringify(expr.body)
+                )
+        );
     }
 
     @Override
     public String visitGroupingExpr(Expr.Grouping expr) {
-        return "(" + expr.accept(this) + ")";
+        return AstStringFormatter.formatCompoundNode("Expr.Grouping",
+                Collections.singletonList(
+                        "expression"
+                ),
+                Collections.singletonList(
+                        stringify(expr.expression)
+                )
+        );
     }
 
-    @Override
-    public String visitClassStmt(Stmt.Class stmt) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("class ");
-        builder.append(stmt.identifier.lexeme());
-        if (concise) return builder.toString();
-        builder.append("{\n");
-        for (Stmt.Function method : stmt.methods) {
-            builder.append("\tfun ");
-            builder.append(method.identifier.lexeme());
-            builder.append("(");
-            for (Token param : method.function.parameters) {
-                builder.append(param);
-                if (param != method.function.parameters.get(method.function.parameters.size() - 1))
-                    builder.append(", ");
-            }
-            builder.append(")\n");
-        }
-        builder.append("}");
-        return builder.toString();
-    }
-
-    @Override
-    public String visitFunctionStmt(Stmt.Function stmt) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("fun ");
-        builder.append(stmt.identifier.lexeme());
-        builder.append("(");
-        for (Token param : stmt.function.parameters) {
-            builder.append(param.lexeme());
-            if (!param.equals(stmt.function.parameters.get(stmt.function.parameters.size() - 1)))
-                builder.append(", ");
-        }
-        builder.append(")");
-        if (!concise) {
-            builder.append(" ");
-            builder.append(" {\n");
-            for (Stmt bodyStmt : stmt.function.body) {
-                builder.append("\t");
-                builder.append(bodyStmt.accept(this));
-                builder.append("\n");
-            }
-            builder.append("}");
-        }
-        return builder.toString();
-    }
-
-    @Override
-    public String visitVariableStmt(Stmt.Variable stmt) {
-        return "var " + stmt.identifier.lexeme() + " = " + stmt.initializer.accept(this) + ";";
-    }
-
-    @Override
-    public String visitBlockStmt(Stmt.Block stmt) {
-        if (concise) {
-            return "block statement (" + stmt.statements.size() + ")";
-        } else {
-            StringBuilder builder = new StringBuilder();
-            builder.append("{\n");
-            for (Stmt statement : stmt.statements) {
-                builder.append("\t");
-                builder.append(statement.accept(this));
-                builder.append("\n");
-            }
-            builder.append("}");
-            return builder.toString();
-        }
-    }
-
+    //--Visitor pattern implementations (Stmt)
+    //----Base cases
     @Override
     public String visitBreakStmt(Stmt.Break stmt) {
-        return "break;";
-    }
-
-    @Override
-    public String visitIfStmt(Stmt.If stmt) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("if (");
-        builder.append(stmt.condition.accept(this));
-        builder.append(")");
-        if (!concise) {
-            builder.append(" ");
-            builder.append(stmt.thenBranch.accept(this));
-            if (stmt.elseBranch != null) {
-                builder.append(" else ");
-                builder.append(stmt.elseBranch.accept(this));
-            }
-        }
-        return builder.toString();
-    }
-
-    @Override
-    public String visitPrintStmt(Stmt.Print stmt) {
-        return "print " + stmt.expression.accept(this) + ";";
+        return AstStringFormatter.formatBaseNode("Stmt.Break", "null");
     }
 
     @Override
     public String visitReturnStmt(Stmt.Return stmt) {
-        if (stmt.expression != null) {
-            return "return " + stmt.expression.accept(this) + ";";
-        } else {
-            return "return;";
-        }
+        return AstStringFormatter.formatBaseNode("Stmt.Return", stmt.expression != null ?  stringify(stmt.expression) : "null");
+    }
+
+    //----Non base cases
+    @Override
+    public String visitClassStmt(Stmt.Class stmt) {
+        return AstStringFormatter.formatCompoundNode("Stmt.Class",
+                Arrays.asList(
+                        "identifier",
+                        "methods"
+                ),
+                Arrays.asList(
+                        stringify(stmt.identifier),
+                        stringify(stmt.methods)
+                )
+        );
+    }
+
+    @Override
+    public String visitFunctionStmt(Stmt.Function stmt) {
+        return AstStringFormatter.formatCompoundNode("Stmt.Function",
+                Arrays.asList(
+                        "identifier",
+                        "function"
+                ),
+                Arrays.asList(
+                        stringify(stmt.identifier),
+                        stringify(stmt.function)
+                )
+        );
+    }
+
+    @Override
+    public String visitVariableStmt(Stmt.Variable stmt) {
+        return AstStringFormatter.formatCompoundNode("Stmt.Variable",
+                Arrays.asList(
+                        "identifier",
+                        "initializer"
+                ),
+                Arrays.asList(
+                        stringify(stmt.identifier),
+                        stmt.initializer != null ? stringify(stmt.initializer) : "null"
+                )
+        );
+    }
+
+    @Override
+    public String visitBlockStmt(Stmt.Block stmt) {
+        return AstStringFormatter.formatCompoundNode("Stmt.Block",
+                Collections.singletonList(
+                        "statements"
+                ),
+                Collections.singletonList(
+                        stringify(stmt.statements)
+                )
+        );
+    }
+
+    @Override
+    public String visitIfStmt(Stmt.If stmt) {
+        return AstStringFormatter.formatCompoundNode("Stmt.If",
+                Arrays.asList(
+                        "condition",
+                        "thenBranch",
+                        "elseBranch"
+                ),
+                Arrays.asList(
+                        stringify(stmt.condition),
+                        stringify(stmt.thenBranch),
+                        stmt.elseBranch != null ? stringify(stmt.elseBranch) : "null"
+                )
+        );
+    }
+
+    @Override
+    public String visitPrintStmt(Stmt.Print stmt) {
+        return AstStringFormatter.formatCompoundNode("Stmt.Print",
+                Collections.singletonList(
+                        "expression"
+                ),
+                Collections.singletonList(
+                        stringify(stmt.expression)
+                )
+        );
     }
 
     @Override
     public String visitWhileStmt(Stmt.While stmt) {
-        if (concise) {
-            return "while (" + stmt.condition.accept(this) + ")";
-        } else {
-            return "while (" + stmt.condition.accept(this) + ")" + stmt.body.accept(this);
-        }
+        return AstStringFormatter.formatCompoundNode("Stmt.While",
+                Arrays.asList(
+                        "condition",
+                        "body"
+                ),
+                Arrays.asList(
+                        stringify(stmt.condition),
+                        stringify(stmt.body)
+                )
+        );
     }
 
     @Override
     public String visitExpressionStmt(Stmt.Expression stmt) {
-        return stmt.expression.accept(this) + ";";
+        return AstStringFormatter.formatCompoundNode("Stmt.Expression",
+                Collections.singletonList(
+                        "expression"
+                ),
+                Collections.singletonList(
+                        stringify(stmt.expression)
+                )
+        );
     }
 }
- */

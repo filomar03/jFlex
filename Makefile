@@ -14,6 +14,9 @@ JCFLAGS := -d $(OUT_DIR)/ -cp $(SRC_DIR)/
 program-run: $(CLS)
 		java -cp $(OUT_DIR) com.filomar.interpreter.Flex scripts/main.flx
 
+program-drun: $(CLS) #d stands for debug
+		java -cp $(OUT_DIR) com.filomar.interpreter.Flex scripts/main.flx 2>~/Desktop/flex_log.txt
+
 prompt-run: $(CLS)
 		java -cp $(OUT_DIR) com.filomar.interpreter.Flex 
 
