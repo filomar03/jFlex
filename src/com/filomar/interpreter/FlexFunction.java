@@ -2,21 +2,18 @@ package com.filomar.interpreter;
 
 import java.util.List;
 
-public class FlexFunction implements FlexCallable{
-    //Fields
+public class FlexFunction implements FlexCallable {
     private final String name;
     private final Expr.Function declaration;
     private final Environment closure;
 
-    //Constructors
     FlexFunction(String name, Expr.Function declaration, Environment closure) {
         this.name = name;
         this.declaration = declaration;
         this.closure = closure;
     }
 
-    //Methods
-    //--Function core methods
+    // FlexCallable interface implementation
     @Override
     public int arity() {
         return declaration.parameters.size();
@@ -32,8 +29,9 @@ public class FlexFunction implements FlexCallable{
         return null;
     }
 
+    
     @Override
     public String toString() {
-        return "(fun)" + name;
+        return "[fun " + name + "]";
     }
 }

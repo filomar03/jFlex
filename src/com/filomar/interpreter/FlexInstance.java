@@ -13,8 +13,8 @@ public class FlexInstance {
 
     public Object get(Token property) {
         if (fields.containsKey(property.lexeme())) return fields.get(property.lexeme());
-    
-        throw new RuntimeError(property, "Desired property doesn't exist in this instance");
+
+        throw new RuntimeError(property, "Undefined property '" + property.lexeme() + "'");
     }
 
     public void set(Token field, Object value) {
@@ -23,6 +23,6 @@ public class FlexInstance {
 
     @Override
     public String toString() {
-        return "(instance)" + klass.name;
+        return "[instance " + klass + "]";
     }
 }

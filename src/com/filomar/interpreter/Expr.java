@@ -12,9 +12,9 @@ abstract class Expr {
 		R visitCallExpr(Call expr);
 		R visitGetExpr(Get expr);
 		R visitFunctionExpr(Function expr);
+		R visitGroupingExpr(Grouping expr);
 		R visitLiteralExpr(Literal expr);
 		R visitVariableExpr(Variable expr);
-		R visitGroupingExpr(Grouping expr);
 	}
 
 	abstract <R> R accept(Visitor<R> visitor);
@@ -33,16 +33,20 @@ abstract class Expr {
 			return visitor.visitAssignExpr(this);
 		}
 
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
 	}
 
 	static class Set extends Expr {
-		final Expr instance;
-		final Token property;
+		final Expr object;
+		final Token field;
 		final Expr value;
 
-		Set(Expr instance, Token property, Expr value) {
-			this.instance = instance;
-			this.property = property;
+		Set(Expr object, Token field, Expr value) {
+			this.object = object;
+			this.field = field;
 			this.value = value;
 		}
 
@@ -51,6 +55,10 @@ abstract class Expr {
 			return visitor.visitSetExpr(this);
 		}
 
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
 	}
 
 	static class Logical extends Expr {
@@ -69,6 +77,10 @@ abstract class Expr {
 			return visitor.visitLogicalExpr(this);
 		}
 
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
 	}
 
 	static class Binary extends Expr {
@@ -87,6 +99,10 @@ abstract class Expr {
 			return visitor.visitBinaryExpr(this);
 		}
 
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
 	}
 
 	static class Unary extends Expr {
@@ -103,16 +119,20 @@ abstract class Expr {
 			return visitor.visitUnaryExpr(this);
 		}
 
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
 	}
 
 	static class Call extends Expr {
 		final Expr callee;
-		final Token locationReference;
+		final Token paren;
 		final List<Expr> arguments;
 
-		Call(Expr callee, Token locationReference, List<Expr> arguments) {
+		Call(Expr callee, Token paren, List<Expr> arguments) {
 			this.callee = callee;
-			this.locationReference = locationReference;
+			this.paren = paren;
 			this.arguments = arguments;
 		}
 
@@ -121,14 +141,18 @@ abstract class Expr {
 			return visitor.visitCallExpr(this);
 		}
 
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
 	}
 
 	static class Get extends Expr {
-		final Expr instance;
+		final Expr object;
 		final Token property;
 
-		Get(Expr instance, Token property) {
-			this.instance = instance;
+		Get(Expr object, Token property) {
+			this.object = object;
 			this.property = property;
 		}
 
@@ -137,6 +161,10 @@ abstract class Expr {
 			return visitor.visitGetExpr(this);
 		}
 
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
 	}
 
 	static class Function extends Expr {
@@ -153,34 +181,10 @@ abstract class Expr {
 			return visitor.visitFunctionExpr(this);
 		}
 
-	}
-
-	static class Literal extends Expr {
-		final Object value;
-
-		Literal(Object value) {
-			this.value = value;
-		}
-
 		@Override
-		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitLiteralExpr(this);
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
 		}
-
-	}
-
-	static class Variable extends Expr {
-		final Token identifier;
-
-		Variable(Token identifier) {
-			this.identifier = identifier;
-		}
-
-		@Override
-		<R> R accept(Visitor<R> visitor) {
-			return visitor.visitVariableExpr(this);
-		}
-
 	}
 
 	static class Grouping extends Expr {
@@ -195,6 +199,46 @@ abstract class Expr {
 			return visitor.visitGroupingExpr(this);
 		}
 
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
+	}
+
+	static class Literal extends Expr {
+		final Object value;
+
+		Literal(Object value) {
+			this.value = value;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitLiteralExpr(this);
+		}
+
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
+	}
+
+	static class Variable extends Expr {
+		final Token identifier;
+
+		Variable(Token identifier) {
+			this.identifier = identifier;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitVariableExpr(this);
+		}
+
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
 	}
 
 }

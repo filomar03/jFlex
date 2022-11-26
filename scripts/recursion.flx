@@ -3,7 +3,7 @@ fun fib(n) {
     return fib(n - 1) + fib(n - 2);
 }
 
-for (var i = 0; i < 50; i = i + 1) {
+for (var i = 0; ; i = i + 1) {
     var start = clock();
     var n = fib(i);
     print "fib(" + i + ") = " + n + " in " + (clock() - start) + " seconds";

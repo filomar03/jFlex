@@ -12,25 +12,26 @@ public class GenerateAst {
             System.out.println("Usage: GenerateAst <output directory>");
             System.exit(64);
         }
-        defineAst(args[0], "com.filomar.interpreter", "Expr", Arrays.asList(
+        String packageName = "com.filomar.interpreter";
+        defineAst(args[0], packageName, "Expr", Arrays.asList(
                 "Assign   : Token target, Expr expression",
-                "Set      : Expr instance, Token property, Expr value",
+                "Set      : Expr object, Token field, Expr value",
                 "Logical  : Expr left, Token operator, Expr right",
                 "Binary   : Expr left, Token operator, Expr right",
                 "Unary    : Token operator, Expr expression",
-                "Call     : Expr callee, Token locationReference, List<Expr> arguments",
-                "Get      : Expr instance, Token property",
+                "Call     : Expr callee, Token paren, List<Expr> arguments",
+                "Get      : Expr object, Token property",
                 "Function : List<Token> parameters, List<Stmt> body",
+                "Grouping : Expr expression",
                 "Literal  : Object value",
-                "Variable : Token identifier",
-                "Grouping : Expr expression"
+                "Variable : Token identifier"
                 ));
-        defineAst(args[0], "com.filomar.interpreter", "Stmt", Arrays.asList(
-                //low-priority statements (aka: declarations)
+        defineAst(args[0], packageName, "Stmt", Arrays.asList(
+                // low-priority statements (aka: declarations)
                 "Class      : Token identifier, List<Stmt.Function> methods",
                 "Function   : Token identifier, Expr.Function function",
                 "Variable   : Token identifier, Expr initializer",
-                //high-priority statements (aka: statements)
+                // high-priority statements (aka: statements)
                 "Block      : List<Stmt> statements",
                 "Break      : Token keyword",
                 "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
@@ -96,12 +97,11 @@ public class GenerateAst {
         writer.println("\t\t\treturn visitor.visit" + className + baseName + "(this);");
         writer.println("\t\t}\n");
 
-        //Debug purpose only, remove on final build
-        //Creates useful strings representation of AST nodes for the debugger, see AstPrinter.class
-        /*writer.println("\t\t@Override");
-        writer.println("\t\tpublic String toString() {");
-        writer.println("\t\t\treturn Flex.getAstPrinter().stringify(this);");
-        writer.println("\t\t}");*/
+        // See AstPrinter.class
+        writer.println("\t\t@Override"); // Debug purpose only
+        writer.println("\t\tpublic String toString() {"); // Debug purpose only
+        writer.println("\t\t\treturn Flex.getAstPrinter().stringify(this);"); // Debug purpose only
+        writer.println("\t\t}"); // Debug purpose only
 
         writer.println("\t}\n"); 
     }

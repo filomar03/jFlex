@@ -4,11 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Environment {
-    //Fields
     private final Environment parent;
     private final Map<String, Object> bindings = new HashMap<>();
 
-    //Constructors
     Environment() {
         parent = null;
     }
@@ -17,18 +15,17 @@ public class Environment {
         this.parent = enclosure;
     }
 
-    //Methods
-    //--Traverse environments
+    // Traverse environments
     Environment getAncestor(int distance) {
         Environment environment = this;
         for (int i = 0; i < distance; i++) {
+            assert environment != null;
             environment = environment.parent;
         }
-
         return environment;
     }
 
-    //--Manage environment bindings
+    // Manage environment bindings
     void create(String name, Object value) {
         bindings.put(name, value);
     }
@@ -37,10 +34,11 @@ public class Environment {
         if (bindings.containsKey(identifier.lexeme()))
             return bindings.get(identifier.lexeme());
 
-        throw new RuntimeError(identifier, "Undefined binding '" + identifier.lexeme() + "'.");
+        throw new RuntimeError(identifier, "Undefined binding '" + identifier.lexeme() + "'");
     }
 
     Object getAt(String name, int distance) {
+        assert getAncestor(distance).bindings.containsKey(name);
         return getAncestor(distance).bindings.get(name);
     }
 
@@ -50,10 +48,11 @@ public class Environment {
             return;
         }
 
-        throw new RuntimeError(identifier, "Undefined binding " + identifier.lexeme() + "'.");
+        throw new RuntimeError(identifier, "Undefined binding " + identifier.lexeme() + "'");
     }
 
     void assignAt(String name, Object value, int distance) {
+        assert getAncestor(distance).bindings.containsKey(name);
         getAncestor(distance).bindings.put(name, value);
     }
 }

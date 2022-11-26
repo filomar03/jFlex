@@ -6,33 +6,29 @@ import java.util.Map;
 import java.util.Stack;
 
 public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
-    //Enums
     private enum FunctionType {
         NONE,
         FUNCTION,
         METHOD
     }
 
-    //Fields
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
     private int loopDepth = 0;
 
-    //Constructors
     Resolver(Interpreter interpreter) {
         this.interpreter = interpreter;
     }
 
-    //Methods
-    //--Core method
+    // Start resolving
     void resolve(List<Stmt> statements) {
         for (Stmt statement : statements) {
             resolve(statement);
         }
     }
 
-    //--Manage scopes stack
+    // Manage scopes stack
     private void beginScope() {
         scopes.push(new HashMap<>());
     }
@@ -41,14 +37,14 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         scopes.pop();
     }
 
-    //--Manage bindings map
+    // Manage bindings
     private void declare(Token identifier) {
         if (scopes.isEmpty()) return;
 
         Map<String, Boolean> scope = scopes.peek();
 
         if (scope.containsKey(identifier.lexeme())) {
-            Flex.onErrorDetected(identifier, "A variable with this name already exists in the current scope");
+            Flex.onErrorDetected(identifier, "A variable named '" + identifier.lexeme() + "' already exists in the current scope");
         }
 
         scope.put(identifier.lexeme(), false);
@@ -60,7 +56,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         scopes.peek().put(identifier.lexeme(), true);
     }
 
-    //--Visitor pattern type matching
+    // Visitor pattern type matching
     private void resolve(Stmt statement) {
         statement.accept(this);
     }
@@ -69,17 +65,17 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         expression.accept(this);
     }
 
-    //--Visitor pattern implementations
+    // Visitor pattern implementations (Expr)
     @Override
     public Void visitAssignExpr(Expr.Assign expr) {
-        resolve(expr.expression);
         resolveLocal(expr, expr.target);
+        resolve(expr.expression);
         return null;
     }
 
     @Override
     public Void visitSetExpr(Expr.Set expr) {
-        resolve(expr.instance);
+        resolve(expr.object);
         resolve(expr.value);
         return null;
     }
@@ -115,7 +111,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitGetExpr(Expr.Get expr) {
-        resolve(expr.instance);
+        resolve(expr.object);
         return null;
     }
 
@@ -146,6 +142,8 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         return null;
     }
 
+
+    // Visitor pattern implementations (Stmt)
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
         declare(stmt.identifier);
@@ -214,12 +212,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
         loopDepth++;
-
         resolve(stmt.condition);
         resolve(stmt.body);
-
         loopDepth--;
-
         return null;
     }
 
@@ -229,7 +224,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         return null;
     }
 
-    //--Resolve local bindings
+    // Resolve local bindings
     private void resolveLocal(Expr expr, Token identifier) {
         for (int i = scopes.size() - 1; i >= 0; i--) {
             if (scopes.get(i).containsKey(identifier.lexeme())) {

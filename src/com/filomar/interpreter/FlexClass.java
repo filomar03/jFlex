@@ -1,6 +1,8 @@
 package com.filomar.interpreter;
 
-public class FlexClass {
+import java.util.List;
+
+public class FlexClass implements FlexCallable {
     final String name;
 
     FlexClass(String name) {
@@ -8,7 +10,17 @@ public class FlexClass {
     }
 
     @Override
+    public int arity() {
+        return 0;
+    }
+
+    @Override
+    public Object call(Interpreter interpreter, List<Object> arguments) {
+        return new FlexInstance(this);
+    }
+
+    @Override
     public String toString() {
-        return "(class)" + name;
+        return "[class " + name + "]";
     }
 }

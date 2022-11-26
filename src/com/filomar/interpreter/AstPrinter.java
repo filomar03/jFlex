@@ -1,11 +1,12 @@
 /*
-    This class stringify AbstractSyntaxTree nodes
-        Override toString() methods of all Expr.class and Stmt.class subclasses with the following to gather useful string when using the debugger.
-        Example:
-            @Override
-            public String toString() {
-                return Flex.debugAstPrinter().stringify(this);
-            }
+    This class stringify AbstractSyntaxTree nodes expanding in a tree layout
+
+    Override toString() methods of all Expr.class and Stmt.class subclasses with the following to gather useful string when using the debugger.
+    Example:
+        @Override
+        public String toString() {
+            return Flex.debugAstPrinter().stringify(this);
+        }
 */
 
 package com.filomar.interpreter;
@@ -17,7 +18,6 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
-    //Nested classes
     private static class AstStringFormatter {
         private static final String trunk = "|";
         private static final String branch = "--";
@@ -54,8 +54,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         }
     }
 
-    //Methods
-    //--Visitor pattern type matching
+    // Visitor pattern type matching
     String stringify(Expr expr) {
         return expr.accept(this);
     }
@@ -64,23 +63,24 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return stmt.accept(this);
     }
 
-    String stringify(Token token) { //helper method to stringify tokens inside lists
+    // Helper methods to stringify objects that don't require visitor pattern type matching
+    String stringify(Token token) {
         return token.lexeme();
     }
 
-    <R> String stringify(List<R> list) { //helper method to stringify lists
+    <R> String stringify(List<R> list) {
         return AstStringFormatter.formatCompoundNode("List",
                 IntStream.range(0, list.size()).boxed().map(Object::toString).toList(),
                 list.stream().map(r -> {
                     if (r instanceof Expr expr) return stringify(expr);
                     else if (r instanceof Stmt stmt) return stringify(stmt);
                     else if (r instanceof Token token) return stringify(token);
-                    throw new IllegalArgumentException("Unexpected value: " + r);
+                    throw new IllegalArgumentException("Unexpected value: " + r.toString());
                 }).toList());
     }
 
-    //--Visitor pattern implementations (Expr)
-    //----Base cases
+    // Visitor pattern implementations (Expr)
+    // --Base cases
     @Override
     public String visitLiteralExpr(Expr.Literal expr) {
         String value;
@@ -103,7 +103,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return AstStringFormatter.formatBaseNode("Expr.Variable", expr.identifier.lexeme());
     }
 
-    //----Non base cases
+    // --Non base cases
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
         return AstStringFormatter.formatCompoundNode("Expr.Assign",
@@ -127,8 +127,8 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
                         "value"
                 ),
                 Arrays.asList(
-                        stringify(expr.instance),
-                        stringify(expr.property),
+                        stringify(expr.object),
+                        stringify(expr.field),
                         stringify(expr.value)
                 )
         );
@@ -202,7 +202,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
                         "property"
                 ),
                 Arrays.asList(
-                        stringify(expr.instance),
+                        stringify(expr.object),
                         stringify(expr.property)
                 )
         );
@@ -234,8 +234,8 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         );
     }
 
-    //--Visitor pattern implementations (Stmt)
-    //----Base cases
+    // Visitor pattern implementations (Stmt)
+    // --Base cases
     @Override
     public String visitBreakStmt(Stmt.Break stmt) {
         return AstStringFormatter.formatBaseNode("Stmt.Break", "null");
@@ -246,7 +246,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return AstStringFormatter.formatBaseNode("Stmt.Return", stmt.expression != null ?  stringify(stmt.expression) : "null");
     }
 
-    //----Non base cases
+    // --Non base cases
     @Override
     public String visitClassStmt(Stmt.Class stmt) {
         return AstStringFormatter.formatCompoundNode("Stmt.Class",

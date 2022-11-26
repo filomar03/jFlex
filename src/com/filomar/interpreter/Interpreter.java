@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
-    //Nested classes
     private static class BreakEx extends RuntimeException {}
     private static class ReturnEx extends RuntimeException {
         final Object value;
@@ -15,12 +14,10 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
     }
 
-    //Fields
     private final Environment globals = new Environment();
     private Environment environment = globals;
     private final HashMap<Expr, Integer> locals = new HashMap<>();
 
-    //Constructors
     Interpreter() {
         globals.create("clock", new FlexCallable() {
             @Override
@@ -30,23 +27,22 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
             @Override
             public Object call(Interpreter interpreter, List<Object> arguments) {
-                return (double) System.currentTimeMillis();
+                return (double) System.currentTimeMillis() / 1000;
             }
 
             @Override
             public String toString() {
-                return "(native fun)clock";
+                return "[native fun clock]";
             }
         });
     }
 
-    //Methods
-    //--Store resolver analysis results
+    // Store resolver analysis results
     void resolve(Expr expr, int distance) {
         locals.put(expr, distance);
     }
 
-    //--Interpreter core methods
+    // Interpret statements
     void interpret(List<Stmt> statements) {
         try {
             for (Stmt stmt : statements) {
@@ -69,25 +65,23 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
     }
 
-    //--Visitor pattern type matching (statements)
+    // Visitor pattern type matching (declarations e statements)
     private void execute(Stmt stmt) {
         stmt.accept(this);
     }
 
-    //--Visitor pattern implementations (declarations)
+    // Visitor pattern implementations (declarations)
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
-        environment.create(stmt.identifier.lexeme(), null);
         FlexClass klass = new FlexClass(stmt.identifier.lexeme());
-        environment.assign(stmt.identifier, klass);
+        environment.create(stmt.identifier.lexeme(), klass);
         return null;
     }
 
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
-        environment.create(stmt.identifier.lexeme(), null);
         FlexFunction function = new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment);
-        environment.assign(stmt.identifier, function);
+        environment.create(stmt.identifier.lexeme(), function);
         return null;
     }
 
@@ -97,7 +91,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
-    //--Visitor pattern implementations (statements)
+    // Visitor pattern implementations (statements)
     @Override
     public Void visitBlockStmt(Stmt.Block block) {
         executeBlock(block.statements, new Environment(this.environment));
@@ -147,12 +141,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
-    //--Visitor pattern type matching (expressions)
+    // Visitor pattern type matching (expressions)
     private Object evaluate(Expr expr) {
         return expr.accept(this);
     }
 
-    //--Visitor pattern implementations (expressions)
+    // Visitor pattern implementations (expressions)
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.expression);
@@ -169,22 +163,22 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitSetExpr(Expr.Set expr) {
-        Object object = evaluate(expr.instance);
+        Object object = evaluate(expr.object);
 
         if (object instanceof FlexInstance instance) {
             Object value = evaluate(expr.value);
-            instance.set(expr.property, value);
+            instance.set(expr.field, value);
             return value;
         }
 
-        throw new RuntimeError(expr.property, "Cannot set propriety of an object that is not an instance (Non dovrebbe succedere, in quanto lerrore dovrebbe essere gia dato da GetExpr)");
+        throw new RuntimeError(expr.field, "Cannot set field, object is not an instance");
     }
 
     @Override
     public Object visitLogicalExpr(Expr.Logical expr) {
         Object left = evaluate(expr.left);
 
-        switch (expr.operator.type()) { //DIY short-circuiting even if java operators already have it
+        switch (expr.operator.type()) {
             case AND -> {
                 if (!isTruth(left))
                     return left;
@@ -235,7 +229,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String b)
                     right = b.length();
 
-                checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
+                checkNumericOperand(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left > (double) right;
             }
             case GREATER_EQUAL -> {
@@ -245,7 +239,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String b)
                     right = b.length();
 
-                checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
+                checkNumericOperand(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left >= (double) right;
             }
             case LESS -> {
@@ -255,7 +249,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String b)
                     right = b.length();
 
-                checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
+                checkNumericOperand(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left < (double) right;
             }
             case LESS_EQUAL -> {
@@ -265,7 +259,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String b)
                     right = b.length();
 
-                checkNumericOperand(expr.operator, "All operands must be numbers or strings", left, right);
+                checkNumericOperand(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left <= (double) right;
             }
             case BANG_EQUAL -> {
@@ -304,11 +298,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
 
         if (!(callee instanceof FlexCallable callable)) {
-            throw new RuntimeError(expr.locationReference, "Callee cannot be called, only function and classes can be called");
+            throw new RuntimeError(expr.paren, "Callee cannot be called, only function and classes can be called");
         }
 
         if (args.size() != callable.arity()) {
-            throw new RuntimeError(expr.locationReference, "Expected " + callable.arity() + " argument/s, found " + args.size());
+            throw new RuntimeError(expr.paren, "Expected " + callable.arity() + " argument/s, found " + args.size());
         }
 
         try {
@@ -320,13 +314,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitGetExpr(Expr.Get expr) {
-        Object object = evaluate(expr.instance);
+        Object object = evaluate(expr.object);
 
         if (object instanceof FlexInstance instance) {
             return instance.get(expr.property);
         }
         
-        throw new RuntimeError(expr.property, "Trying to retrieve a property from an object that is not an instance");
+        throw new RuntimeError(expr.property, "Cannot get property, object is not an instance");
     }
 
     @Override
@@ -354,7 +348,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return evaluate(expr.expression);
     }
 
-    //--Utilities
+    // Utilities
     private boolean isTruth(Object obj) {
         if (obj instanceof Boolean) return (boolean) obj;
         if (obj instanceof Double) return (double) obj != 0;
@@ -375,15 +369,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
     }
 
-    private String stringify(Object a) {
-        if (a == null) return "null";
-        if (a instanceof String str) return '"' + str + '"';
-        if (a instanceof Double n) {
+    private String stringify(Object obj) {
+        if (obj == null) return "null";
+        if (obj instanceof Double n) {
             if (n % 1 == 0) {
                 String str = n.toString();
                 return str.substring(0, str.length() - 2);
             }
         }
-        return a.toString();
+        return obj.toString();
     }
 }

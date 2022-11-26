@@ -3,7 +3,7 @@
 name "hello world!" 420.69
 and class else false fun for if null or
 print return super this true var while
-//line comment if (x == 0)
+// line comment if (x == 0)
 /* block
     comment
 fun foo() */

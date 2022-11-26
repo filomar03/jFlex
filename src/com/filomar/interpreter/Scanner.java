@@ -8,7 +8,6 @@ import java.util.HashMap;
 import static com.filomar.interpreter.TokenType.*;
 
 public class Scanner {
-    //Fields
     private final String source;
     private final List<Token> tokens = new ArrayList<>();
     private int start = 0;
@@ -17,7 +16,6 @@ public class Scanner {
     private int column = 0;
     private static final Map<String, TokenType> keywords = new HashMap<>();;
 
-    //Static blocks
     static {
         keywords.put("and", AND);
         keywords.put("break", BREAK);
@@ -38,13 +36,11 @@ public class Scanner {
         keywords.put("while", WHILE);
     }
 
-    //Constructors
     Scanner(String source) {
         this.source = source;
     }
 
-    //Methods
-    //--Scanning
+    // Scanning
     List<Token> scanTokens() {
         while (!isAtEnd()) {
             start = next;
@@ -78,7 +74,7 @@ public class Scanner {
                 if (match('/')) reportError("Closing an unopened comment block");
                 else addToken(STAR);
             }
-            case ' ', '\t', '\r', '\n' -> {} //ignore blanks, managed by advance()
+            case ' ', '\t', '\r', '\n' -> {} // ignore blanks, managed by advance()
             case '!' -> addToken(match('=') ? BANG_EQUAL : BANG);
             case '=' -> addToken(match('=') ? EQUAL_EQUAL : EQUAL);
             case '>' -> addToken(match('=') ? GREATER_EQUAL : GREATER);
@@ -92,7 +88,7 @@ public class Scanner {
         }
     }
 
-    //--Error reporting
+    // Error reporting
     private void reportError(String message) {
         Flex.onErrorDetected(line, column, message);
     }
@@ -101,7 +97,7 @@ public class Scanner {
         Flex.onErrorDetected(line, column, message);
     }
 
-    //--Type checking
+    // Type checking
     private boolean isDigit(char c) {
         return c >= '0' && c <= '9';
     }
@@ -116,7 +112,7 @@ public class Scanner {
         return isAlpha(c) || isDigit(c);
     }
 
-    //--Complex token helpers
+    // Literal token helpers
     private void stringLiteralHelper() {
         int stringStartLine = line;
         int stringStartColumn = column;
@@ -149,7 +145,7 @@ public class Scanner {
         addToken(type);
     }
 
-    //--Comment helpers
+    // Comment helpers
     private void lineCommentHelper() {
         while (!isAtEnd())
             if (advance() == '\n') return;
@@ -165,12 +161,12 @@ public class Scanner {
         reportError(blockStartLine, blockStartColumn, "Unclosed comment block");
     }
 
-    //--Source manipulation
-    private boolean isAtEnd() { //call to ensure EOF safety
+    // Source manipulation
+    private boolean isAtEnd() { // call to ensure EOF safety
         return next >= source.length();
-    } //EOF safe
+    } // EOF safe
 
-    private char advance() { //not EOF safe
+    private char advance() { // not EOF safe
         char c = source.charAt(next++);
         column++;
         if (c == '\n') {
@@ -180,16 +176,16 @@ public class Scanner {
         return c;
     }
 
-    private char peek(int steps) { //EOF safe
+    private char peek(int steps) { // EOF safe
         if (next + steps - 1 >= source.length()) return '\0';
         return source.charAt(next + steps - 1);
     }
 
-    private boolean match(char expected) { //EOF safe
+    private boolean match(char expected) { // EOF safe
         return !isAtEnd() && peek(1) == expected && advance() == expected;
     }
 
-    //--Token list management
+    // Token list management
     private void addToken(TokenType type, Object literal) {
         String lexeme = source.substring(start, next);
         tokens.add(new Token(type, lexeme, literal, line, column - lexeme.length() + 1));

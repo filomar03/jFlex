@@ -7,20 +7,16 @@ import java.util.Arrays;
 import static com.filomar.interpreter.TokenType.*;
 
 public class Parser {
-    //Nested classes
     private static class ParseError extends RuntimeException {}
 
-    //Fields
     private final List<Token> tokens;
     private int current = 0;
 
-    //Constructors
     Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
 
-    //Methods
-    //--Parser core method
+    // Start parsing
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
@@ -29,7 +25,7 @@ public class Parser {
         return statements;
     }
 
-    //--Declarations parsing
+    // Parse declaration
     private Stmt declaration() {
         try {
             if (match(CLASS)) return classStmt();
@@ -64,26 +60,6 @@ public class Parser {
         return new Stmt.Function(identifier, functionDefinition());
     }
 
-    private Expr.Function functionDefinition() {
-        consume(LEFT_PAREN, "Expected opening paren");
-        List<Token> parameters = new ArrayList<>();
-        if (!match(RIGHT_PAREN)) {
-            do {
-                if (parameters.size() < 255) {
-                    parameters.add(consume(IDENTIFIER, "Expected a valid parameter"));
-                } else {
-                    throw error(current(), "Function/Method definitions cannot have more than 255 parameters");
-                }
-            } while (match(COMMA));
-            consume(RIGHT_PAREN, "Expected closing paren");
-        }
-
-        consume(LEFT_BRACE, "Expect opening brace");
-        List<Stmt> body = blockCollector();
-
-        return new Expr.Function(parameters, body);
-    }
-
     private Stmt varDclStmt() {
         Token identifier = consume(IDENTIFIER, "Expected a valid variable name");
 
@@ -93,11 +69,10 @@ public class Parser {
         }
 
         consume(SEMICOLON, "Expected semicolon");
-
         return new Stmt.Variable(identifier, initializer);
     }
 
-    //--Statements parsing
+    // Statements parsing
     private Stmt statement() {
         if (match(LEFT_BRACE)) return new Stmt.Block(blockCollector());
         if (match(BREAK)) return breakStmt();
@@ -109,21 +84,14 @@ public class Parser {
         return expressionStmt();
     }
 
-    private List<Stmt> blockCollector() {
-        List<Stmt> statements = new ArrayList<>();
-        while (current().type() != RIGHT_BRACE && !isAtEnd()) {
-            statements.add(declaration());
-        }
-        consume(RIGHT_BRACE, "Expected closing brace");
-        return statements;
-    }
+
 
     private Stmt breakStmt() {
         consume(SEMICOLON, "Expected semicolon");
         return new Stmt.Break(previous());
     }
 
-    private Stmt forStmt() { //Syntactic sugar, parsed as a 'WHILE'
+    private Stmt forStmt() {
         consume(LEFT_PAREN, "Expected opening paren");
 
         Stmt initializer;
@@ -155,9 +123,7 @@ public class Parser {
                     new Stmt.Expression(increment)
             ));
         }
-
         body = new Stmt.While((condition != null ? condition : new Expr.Literal(true)), body);
-
         if (initializer != null) {
             body = new Stmt.Block(Arrays.asList(
                     initializer,
@@ -203,6 +169,7 @@ public class Parser {
         consume(RIGHT_PAREN, "Expected closing paren");
 
         Stmt body = statement();
+
         return new Stmt.While(condition, body);
     }
 
@@ -212,7 +179,38 @@ public class Parser {
         return new Stmt.Expression(expr);
     }
 
-    //--Expression parsing (Top-down)
+    // Helper method for parsing block statements
+    private List<Stmt> blockCollector() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(declaration());
+        }
+        consume(RIGHT_BRACE, "Expected closing brace");
+        return statements;
+    }
+
+    // Helper method for parsing functions
+    private Expr.Function functionDefinition() {
+        consume(LEFT_PAREN, "Expected opening paren");
+        List<Token> parameters = new ArrayList<>();
+        if (!match(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() < 255) {
+                    parameters.add(consume(IDENTIFIER, "Expected a valid parameter"));
+                } else {
+                    throw error(current(), "Function/Method definitions cannot have more than 255 parameters");
+                }
+            } while (match(COMMA));
+            consume(RIGHT_PAREN, "Expected closing paren");
+        }
+
+        consume(LEFT_BRACE, "Expect opening brace");
+        List<Stmt> body = blockCollector();
+
+        return new Expr.Function(parameters, body);
+    }
+
+    // Expression parsing (top-down)
     private Expr expression() {
         return assignmentExpr();
     }
@@ -221,16 +219,15 @@ public class Parser {
         Expr expr = logicalOrExpr();
 
         if (match(EQUAL)) {
-            Token ref = previous();
+            Token op = previous();
             Expr right = assignmentExpr();
-
             if (expr instanceof Expr.Variable var) {
                 return new Expr.Assign(var.identifier, right);
             } else if (expr instanceof Expr.Get get) {
-                return new Expr.Set(get.instance, get.property, right);
+                return new Expr.Set(get.object, get.property, right);
             }
 
-            throw error(ref, "Invalid assignment target");
+            throw error(op, "Invalid assignment target, only variables and fields can be assigned");
         }
 
         return expr;
@@ -315,10 +312,10 @@ public class Parser {
             return new Expr.Unary(op, expr);
         }
 
-        return callExpr();
+        return secondaryExpr();
     }
 
-    private Expr callExpr() {
+    private Expr secondaryExpr() {
         Expr expr = primaryExpr();
 
         while (true) {
@@ -348,22 +345,22 @@ public class Parser {
     }
 
     private Expr primaryExpr() {
-        if (match(FALSE)) return new Expr.Literal(false);
-        if (match(TRUE)) return new Expr.Literal(true);
-        if (match(NULL)) return new Expr.Literal(null);
-        if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal());
-        if (match(IDENTIFIER)) return new Expr.Variable(previous());
         if (match(FUN)) return functionDefinition();
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expected closing paren");
             return new Expr.Grouping(expr);
         }
+        if (match(FALSE)) return new Expr.Literal(false);
+        if (match(NULL)) return new Expr.Literal(null);
+        if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal());
+        if (match(TRUE)) return new Expr.Literal(true);
+        if (match(IDENTIFIER)) return new Expr.Variable(previous());
 
-        throw error(current(), "Expected a primary expression");
+        throw error(current(), "Expected a primary expression (lambda function, grouping, literal, identifier)");
     }
 
-    //--Error reporting and recovery
+    // Error reporting and recovery
     private ParseError error(Token token, String message) {
         Flex.onErrorDetected(token, message);
         return new ParseError();
@@ -382,14 +379,14 @@ public class Parser {
         }
     }
 
-    //--Token list manipulation
-    private Token consume(TokenType type, String message) throws ParseError { //EOF safe
+    // Token list manipulation
+    private Token consume(TokenType type, String message) { // EOF safe
         if (match(type)) return previous();
 
         throw error(current(), message);
     }
 
-    private boolean match(TokenType... types) { //EOF safe
+    private boolean match(TokenType... types) { // EOF safe
         for (TokenType type : types) {
             if (check(type)) {
                 advance();
@@ -399,34 +396,34 @@ public class Parser {
         return false;
     }
 
-    private boolean checkNext(TokenType type) { //EOF safe
+    private boolean checkNext(TokenType type) { // EOF safe
         return next().type() == type;
     }
 
-    private boolean check(TokenType type) { //EOF safe
+    private boolean check(TokenType type) { // EOF safe
         return current().type() == type;
     }
 
-    private Token advance() { //EOF safe
+    private Token advance() { // EOF safe
         if (!isAtEnd()) return tokens.get(current++);
         return current();
     }
 
-    private boolean isAtEnd() { //EOF safe
+    private boolean isAtEnd() { // EOF safe
         return current().type() == EOF;
     }
 
-    private Token next() { //EOF safe
+    private Token next() { // EOF safe
         if (isAtEnd()) return current();
         return tokens.get(current + 1);
     }
 
-    private Token previous() { //EOF safe
+    private Token previous() { // EOF safe
         if (current == 0) return current();
         return tokens.get(current - 1);
     }
 
-    private Token current() { //EOF safe
+    private Token current() { // EOF safe
         return tokens.get(current);
     }
 }

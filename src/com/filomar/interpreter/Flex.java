@@ -9,25 +9,22 @@ import java.io.IOException;
 import java.util.List;
 
 public class Flex {
-    //Fields
     private static final Interpreter interpreter = new Interpreter();
     static boolean hadError = false;
     static boolean hadRuntimeError = false;
 
-    //Methods
-    //--Main
     public static void main(String[] args) throws IOException {
         if (args.length == 0)
             runPrompt();
         else if (args.length == 1)
             runFile(args[0]);
         else {
-            System.out.println("Usage: Flex <script>");
+            System.out.println("Usage:\n - to run session prompt --> run without arguments\n - to run program from source file --> run with source file path as argument");
             System.exit(64);
         }
     }
 
-    //--Run target program
+    // Running program from file
     private static void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
@@ -36,6 +33,7 @@ public class Flex {
         if (hadRuntimeError) System.exit(70);
     }
 
+    // Running program from system input stream
     private static void runPrompt() throws IOException {
         InputStreamReader input = new InputStreamReader(System.in);
         BufferedReader reader = new BufferedReader(input);
@@ -49,21 +47,22 @@ public class Flex {
         }
     }
 
+    // Run a string (scan --> Parse --> Resolve --> Interpret)
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
-        System.err.println("[DEBUG] printing scanned tokens...\n"); //Debug purpose only, remove on final build
-        tokens.forEach(System.err::println); //Debug purpose only, remove on final build
-        System.err.println("\n" + "-".repeat(100)); //Debug purpose only, remove on final build
+        System.err.println("[DEBUG] printing scanned tokens...\n"); // Debug purpose only
+        tokens.forEach(System.err::println); // Debug purpose only
+        System.err.println("\n" + "-".repeat(100)); // Debug purpose only
 
         Parser parser = new Parser(tokens);
         List<Stmt> statements = parser.parse();
 
-        System.err.println("\n\n[DEBUG] printing parsed statements..."); //Debug purpose only, remove on final build
-        statements.forEach(x -> System.err.println("\n" + getAstPrinter().stringify(x))); //Debug purpose only, remove on final build
-        System.err.println("\n" + "-".repeat(100)); //Debug purpose only, remove on final build
-        System.err.println("\n\n"); //Debug purpose only, remove on final build
+        System.err.println("\n\n[DEBUG] printing parsed statements..."); // Debug purpose only
+        statements.forEach(x -> System.err.println("\n" + getAstPrinter().stringify(x))); // Debug purpose only
+        System.err.println("\n" + "-".repeat(100)); // Debug purpose only
+        System.err.println("\n\n"); // Debug purpose only
 
         if (hadError) return;
 
@@ -75,27 +74,27 @@ public class Flex {
         interpreter.interpret(statements);
     }
 
-    //--Error handling
+    // Error handling
     static void onErrorDetected(int line, int column, String message) {
         hadError = true;
-        notifyError(line, column, message);
+        notifyError(line, column, message, false);
     }
 
     static void onErrorDetected(Token token, String message) {
         hadError = true;
-        notifyError(token.line(), token.column(), message);
+        notifyError(token.line(), token.column(), message, false);
     }
 
     static void onRuntimeError(RuntimeError error) {
         hadRuntimeError = true;
-        notifyError(error.token.line(), error.token.column(), error.getMessage());
+        notifyError(error.token.line(), error.token.column(), error.getMessage(), true);
     }
 
-    private static void notifyError(int line, int column, String message) { 
-        System.err.println("[" + line + ":" + column + "] ERROR: " + message);
+    private static void notifyError(int line, int column, String message, boolean runtime) {
+        System.err.println("[" + line + ":" + column + "] " + (runtime ? "RUNTIME-ERROR" : "STATIC-ERROR") + ": " + message);
     }
 
-    //Debug purpose only, remove on final build
-    public static AstPrinter astPrinter = new AstPrinter();
-    public static AstPrinter getAstPrinter() { return astPrinter; }
+    // Instantiate AstFormatter
+    public static AstPrinter astPrinter = new AstPrinter(); // Debug purpose only
+    public static AstPrinter getAstPrinter() { return astPrinter; } // Debug purpose only
 }
