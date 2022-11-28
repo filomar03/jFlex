@@ -29,7 +29,12 @@ public class FlexFunction implements FlexCallable {
         return null;
     }
 
-    
+    FlexFunction bind(FlexInstance instance) {
+        Environment instanceReference = new Environment(closure);
+        instanceReference.create("self", instance);
+        return new FlexFunction(name, declaration, instanceReference);
+    }
+
     @Override
     public String toString() {
         return "[fun " + name + "]";

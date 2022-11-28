@@ -19,7 +19,7 @@ public class Environment {
     Environment getAncestor(int distance) {
         Environment environment = this;
         for (int i = 0; i < distance; i++) {
-            assert environment != null;
+            assert environment != null; // Debug purpose only
             environment = environment.parent;
         }
         return environment;
@@ -38,7 +38,7 @@ public class Environment {
     }
 
     Object getAt(String name, int distance) {
-        assert getAncestor(distance).bindings.containsKey(name);
+        assert getAncestor(distance).bindings.containsKey(name); // Debug purpose only
         return getAncestor(distance).bindings.get(name);
     }
 
@@ -52,7 +52,7 @@ public class Environment {
     }
 
     void assignAt(String name, Object value, int distance) {
-        assert getAncestor(distance).bindings.containsKey(name);
+        assert getAncestor(distance).bindings.containsKey(name); // Debug purpose only
         getAncestor(distance).bindings.put(name, value);
     }
 }

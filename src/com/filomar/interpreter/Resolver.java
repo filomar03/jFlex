@@ -142,6 +142,14 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         return null;
     }
 
+    @Override
+    public Void visitSelfExpr(Expr.Self expr) {
+        if (currentFunction != FunctionType.METHOD) Flex.onErrorDetected(expr.keyword, "Cannot use 'self' outside of a method");
+
+        resolveLocal(expr, expr.keyword);
+
+        return null;
+    }
 
     // Visitor pattern implementations (Stmt)
     @Override
@@ -149,9 +157,14 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         declare(stmt.identifier);
         define(stmt.identifier);
 
+        beginScope();
+        scopes.peek().put("self", true);
+
         for (Stmt.Function method : stmt.methods) {
             resolveFunction(method.function , FunctionType.METHOD);
         }
+
+        exitScope();
 
         return null;
     }

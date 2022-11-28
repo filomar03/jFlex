@@ -1,0 +1,1 @@
+usare un Environment all'interno delle funzioni

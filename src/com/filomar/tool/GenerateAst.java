@@ -24,6 +24,7 @@ public class GenerateAst {
                 "Function : List<Token> parameters, List<Stmt> body",
                 "Grouping : Expr expression",
                 "Literal  : Object value",
+                "Self     : Token keyword",
                 "Variable : Token identifier"
                 ));
         defineAst(args[0], packageName, "Stmt", Arrays.asList(

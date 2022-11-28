@@ -99,6 +99,11 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return "Expr.Variable: " + expr.identifier.lexeme();
     }
 
+    @Override
+    public String visitSelfExpr(Expr.Self expr) {
+        return "Expr.Self";
+    }
+
     // --Non base cases
     @Override
     public String visitAssignExpr(Expr.Assign expr) {

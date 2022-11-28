@@ -1,9 +1,7 @@
 package com.filomar.interpreter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.Scanner;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private static class BreakEx extends RuntimeException {}
@@ -352,6 +350,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         } else {
             return globals.get(expr.identifier);
         }
+    }
+
+    @Override
+    public Object visitSelfExpr(Expr.Self expr) {
+        assert locals.get(expr) != null; // Debug purpose only
+        return environment.getAt("self", locals.get(expr));
     }
 
     // Utilities

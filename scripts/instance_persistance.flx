@@ -1,0 +1,14 @@
+var size = 15;
+
+class Box {
+    info() {
+        print self.size;
+     }
+}
+
+var box = Box();
+box.size = 24;
+box.info();
+box.size = "size changed";
+var info = box.info;
+info();

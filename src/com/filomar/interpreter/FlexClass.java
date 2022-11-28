@@ -20,7 +20,7 @@ public class FlexClass implements FlexCallable {
 
     @Override
     public Object call(Interpreter interpreter, List<Object> arguments) {
-        return new FlexInstance(this);
+            return new FlexInstance(this);
     }
 
     FlexFunction findMethod(String name) {

@@ -353,6 +353,7 @@ public class Parser {
         if (match(NULL)) return new Expr.Literal(null);
         if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal());
         if (match(TRUE)) return new Expr.Literal(true);
+        if (match(SELF)) return new Expr.Self(previous());
         if (match(IDENTIFIER)) return new Expr.Variable(previous());
 
         throw error(current(), "Expected a primary expression (lambda function, grouping, literal, identifier)");

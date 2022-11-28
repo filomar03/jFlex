@@ -14,6 +14,7 @@ abstract class Expr {
 		R visitFunctionExpr(Function expr);
 		R visitGroupingExpr(Grouping expr);
 		R visitLiteralExpr(Literal expr);
+		R visitSelfExpr(Self expr);
 		R visitVariableExpr(Variable expr);
 	}
 
@@ -215,6 +216,24 @@ abstract class Expr {
 		@Override
 		<R> R accept(Visitor<R> visitor) {
 			return visitor.visitLiteralExpr(this);
+		}
+
+		@Override
+		public String toString() {
+			return Flex.getAstPrinter().stringify(this);
+		}
+	}
+
+	static class Self extends Expr {
+		final Token keyword;
+
+		Self(Token keyword) {
+			this.keyword = keyword;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitSelfExpr(this);
 		}
 
 		@Override

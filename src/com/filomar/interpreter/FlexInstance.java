@@ -14,8 +14,10 @@ public class FlexInstance {
     Object get(Token property) {
         if (fields.containsKey(property.lexeme())) return fields.get(property.lexeme());
 
+
         FlexFunction method = klass.findMethod(property.lexeme());
-        if (method != null) return method;
+        if (method != null) return method.bind(this);
+
 
         throw new RuntimeError(property, "Undefined field '" + property.lexeme() + "'");
     }
