@@ -31,10 +31,6 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
             return source.replace("\n", "\n".concat(prefix));
         }
 
-        static String formatBaseNode(String nodeName, String nodeValue) {
-            return nodeName + ": " + nodeValue;
-        }
-
         static String formatCompoundNode(String nodeName, List<String> nodeAttributes, List<String> nodeValues) {
             StringBuilder builder = new StringBuilder();
 
@@ -95,12 +91,12 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         }
         else value = expr.value.toString();
 
-        return AstStringFormatter.formatBaseNode("Expr.Literal", value);
+        return "Expr.Literal: " + value;
     }
 
     @Override
     public String visitVariableExpr(Expr.Variable expr) {
-        return AstStringFormatter.formatBaseNode("Expr.Variable", expr.identifier.lexeme());
+        return "Expr.Variable: " + expr.identifier.lexeme();
     }
 
     // --Non base cases
@@ -238,12 +234,12 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     // --Base cases
     @Override
     public String visitBreakStmt(Stmt.Break stmt) {
-        return AstStringFormatter.formatBaseNode("Stmt.Break", "null");
+        return "Stmt.Break";
     }
 
     @Override
     public String visitReturnStmt(Stmt.Return stmt) {
-        return AstStringFormatter.formatBaseNode("Stmt.Return", stmt.expression != null ?  stringify(stmt.expression) : "null");
+        return "Stmt.Return" + (stmt.expression != null ?  stringify(stmt.expression) : "null");
     }
 
     // --Non base cases

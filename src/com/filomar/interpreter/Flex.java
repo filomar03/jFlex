@@ -60,7 +60,10 @@ public class Flex {
         List<Stmt> statements = parser.parse();
 
         System.err.println("\n\n[DEBUG] printing parsed statements..."); // Debug purpose only
-        statements.forEach(x -> System.err.println("\n" + getAstPrinter().stringify(x))); // Debug purpose only
+        statements.forEach(x -> { // Debug purpose only
+            if (x != null) // Debug purpose only
+                System.err.println("\n" + getAstPrinter().stringify(x)); // Debug purpose only
+        }); // Debug purpose only
         System.err.println("\n" + "-".repeat(100)); // Debug purpose only
         System.err.println("\n\n"); // Debug purpose only
 

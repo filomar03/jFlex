@@ -43,15 +43,15 @@ public class Parser {
 
     private Stmt classStmt() {
         Token identifier = consume(IDENTIFIER, "Expected a valid class name");
-        consume(LEFT_BRACE, "Expected opening brace");
+        consume(LEFT_BRACE, "Expected '('");
 
         List<Stmt.Function> methods = new ArrayList<>();
-        while (match(FUN)) {
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
             Token name = consume(IDENTIFIER, "Expected a valid method name");
             methods.add(new Stmt.Function(name, functionDefinition()));
         }
 
-        consume(RIGHT_BRACE, "Expected closing brace");
+        consume(RIGHT_BRACE, "Expected '}'");
         return new Stmt.Class(identifier, methods);
     }
 
@@ -68,7 +68,7 @@ public class Parser {
             initializer = expression();
         }
 
-        consume(SEMICOLON, "Expected semicolon");
+        consume(SEMICOLON, "Expected ';'");
         return new Stmt.Variable(identifier, initializer);
     }
 
@@ -84,15 +84,13 @@ public class Parser {
         return expressionStmt();
     }
 
-
-
     private Stmt breakStmt() {
-        consume(SEMICOLON, "Expected semicolon");
+        consume(SEMICOLON, "Expected ';'");
         return new Stmt.Break(previous());
     }
 
     private Stmt forStmt() {
-        consume(LEFT_PAREN, "Expected opening paren");
+        consume(LEFT_PAREN, "Expected '('");
 
         Stmt initializer;
         if (match(SEMICOLON)) {
@@ -106,13 +104,13 @@ public class Parser {
         Expr condition = null;
         if (!match(SEMICOLON)) {
             condition = expression();
-            consume(SEMICOLON, "Expected semicolon");
+            consume(SEMICOLON, "Expected ';'");
         }
 
         Expr increment = null;
         if (!match(RIGHT_PAREN)) {
             increment = expression();
-            consume(RIGHT_PAREN, "Expected closing paren");
+            consume(RIGHT_PAREN, "Expected ')'");
         }
 
         Stmt body = statement();
@@ -135,9 +133,9 @@ public class Parser {
     }
 
     private Stmt ifStmt() {
-        consume(LEFT_PAREN, "Expected opening paren");
+        consume(LEFT_PAREN, "Expected '('");
         Expr condition = expression();
-        consume(RIGHT_PAREN, "Expected closing paren");
+        consume(RIGHT_PAREN, "Expected ')'");
 
         Stmt thenBranch = statement();
         Stmt elseBranch = null;
@@ -150,7 +148,7 @@ public class Parser {
 
     private Stmt printStmt() {
         Expr value = expression();
-        consume(SEMICOLON, "Expected semicolon");
+        consume(SEMICOLON, "Expected ';'");
         return new Stmt.Print(value);
     }
 
@@ -158,15 +156,15 @@ public class Parser {
         Expr value = null;
         if (!match(SEMICOLON)) {
             value = expression();
-            consume(SEMICOLON, "Expected semicolon");
+            consume(SEMICOLON, "Expected ';'");
         }
         return new Stmt.Return(previous(), value);
     }
 
     private Stmt whileStmt() {
-        consume(LEFT_PAREN, "Expected opening paren");
+        consume(LEFT_PAREN, "Expected '('");
         Expr condition = expression();
-        consume(RIGHT_PAREN, "Expected closing paren");
+        consume(RIGHT_PAREN, "Expected ')'");
 
         Stmt body = statement();
 
@@ -175,7 +173,7 @@ public class Parser {
 
     private Stmt expressionStmt() {
         Expr expr = expression();
-        consume(SEMICOLON, "Expected semicolon");
+        consume(SEMICOLON, "Expected ';'");
         return new Stmt.Expression(expr);
     }
 
@@ -185,13 +183,13 @@ public class Parser {
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
             statements.add(declaration());
         }
-        consume(RIGHT_BRACE, "Expected closing brace");
+        consume(RIGHT_BRACE, "Expected '}'");
         return statements;
     }
 
     // Helper method for parsing functions
     private Expr.Function functionDefinition() {
-        consume(LEFT_PAREN, "Expected opening paren");
+        consume(LEFT_PAREN, "Expected '('");
         List<Token> parameters = new ArrayList<>();
         if (!match(RIGHT_PAREN)) {
             do {
@@ -201,7 +199,7 @@ public class Parser {
                     throw error(current(), "Function/Method definitions cannot have more than 255 parameters");
                 }
             } while (match(COMMA));
-            consume(RIGHT_PAREN, "Expected closing paren");
+            consume(RIGHT_PAREN, "Expected ')'");
         }
 
         consume(LEFT_BRACE, "Expect opening brace");
@@ -330,7 +328,7 @@ public class Parser {
                             throw error(current(), "Calls cannot have more than 255 arguments");
                         }
                     } while (match(COMMA));
-                    consume(RIGHT_PAREN, "Expected closing paren");
+                    consume(RIGHT_PAREN, "Expected ')'");
                 }
                 expr = new Expr.Call(expr, ref, arguments);
             } else if (match(DOT)) {
@@ -348,7 +346,7 @@ public class Parser {
         if (match(FUN)) return functionDefinition();
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
-            consume(RIGHT_PAREN, "Expected closing paren");
+            consume(RIGHT_PAREN, "Expected ')'");
             return new Expr.Grouping(expr);
         }
         if (match(FALSE)) return new Expr.Literal(false);

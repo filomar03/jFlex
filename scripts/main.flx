@@ -1,5 +1,12 @@
-class Box {}
 
-var box = Box();
-box.size = 12;
-box.size.size2 = 12;
+class Egoist {
+    speak() {
+        print a;
+        return Egoist().speak;
+    }
+}
+
+var m = Egoist().speak();
+var n = m();
+var a = 12;
+n();

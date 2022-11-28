@@ -3,6 +3,7 @@ package com.filomar.interpreter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private static class BreakEx extends RuntimeException {}
@@ -73,7 +74,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     // Visitor pattern implementations (declarations)
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
-        FlexClass klass = new FlexClass(stmt.identifier.lexeme());
+        Map<String, FlexFunction> methods = new HashMap<>();
+        for (Stmt.Function function : stmt.methods) {
+            FlexFunction method = new FlexFunction(function.identifier.lexeme(), function.function, environment);
+            methods.put(function.identifier.lexeme(), method);
+        }
+        FlexClass klass = new FlexClass(stmt.identifier.lexeme(), methods);
         environment.create(stmt.identifier.lexeme(), klass);
         return null;
     }
@@ -329,6 +335,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitGroupingExpr(Expr.Grouping expr) {
+        return evaluate(expr.expression);
+    }
+
+    @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
     }
@@ -341,11 +352,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         } else {
             return globals.get(expr.identifier);
         }
-    }
-
-    @Override
-    public Object visitGroupingExpr(Expr.Grouping expr) {
-        return evaluate(expr.expression);
     }
 
     // Utilities

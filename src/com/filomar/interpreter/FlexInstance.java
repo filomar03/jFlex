@@ -4,20 +4,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FlexInstance {
-    private FlexClass klass;
+    private final FlexClass klass;
     private final Map<String, Object> fields = new HashMap<>();
 
     FlexInstance(FlexClass klass) {
         this.klass = klass;
     }
 
-    public Object get(Token property) {
+    Object get(Token property) {
         if (fields.containsKey(property.lexeme())) return fields.get(property.lexeme());
 
-        throw new RuntimeError(property, "Undefined property '" + property.lexeme() + "'");
+        FlexFunction method = klass.findMethod(property.lexeme());
+        if (method != null) return method;
+
+        throw new RuntimeError(property, "Undefined field '" + property.lexeme() + "'");
     }
 
-    public void set(Token field, Object value) {
+    void set(Token field, Object value) {
         fields.put(field.lexeme(), value);
     }
 

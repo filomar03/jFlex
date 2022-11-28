@@ -1,12 +1,16 @@
 package com.filomar.interpreter;
 
 import java.util.List;
+import java.util.Map;
 
 public class FlexClass implements FlexCallable {
-    final String name;
+    private final String name;
+    private final Map<String, FlexFunction> methods;
 
-    FlexClass(String name) {
+
+    FlexClass(String name, Map<String, FlexFunction> methods) {
         this.name = name;
+        this.methods = methods;
     }
 
     @Override
@@ -17,6 +21,10 @@ public class FlexClass implements FlexCallable {
     @Override
     public Object call(Interpreter interpreter, List<Object> arguments) {
         return new FlexInstance(this);
+    }
+
+    FlexFunction findMethod(String name) {
+        return methods.get(name);
     }
 
     @Override

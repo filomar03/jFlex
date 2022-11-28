@@ -122,6 +122,12 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitGroupingExpr(Expr.Grouping expr) {
+        resolve(expr.expression);
+        return null;
+    }
+
+    @Override
     public Void visitLiteralExpr(Expr.Literal expr) {
         return null;
     }
@@ -136,18 +142,17 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         return null;
     }
 
-    @Override
-    public Void visitGroupingExpr(Expr.Grouping expr) {
-        resolve(expr.expression);
-        return null;
-    }
-
 
     // Visitor pattern implementations (Stmt)
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
         declare(stmt.identifier);
         define(stmt.identifier);
+
+        for (Stmt.Function method : stmt.methods) {
+            resolveFunction(method.function , FunctionType.METHOD);
+        }
+
         return null;
     }
 
