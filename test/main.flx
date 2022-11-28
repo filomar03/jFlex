@@ -1,0 +1,14 @@
+class Main {
+    init(a) {
+        self.a = a;
+    }
+
+    run() {
+        print self.a;
+    }
+}
+
+var main = Main(12);
+main.run();
+main.init(112);
+main.run();

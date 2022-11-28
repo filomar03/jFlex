@@ -144,7 +144,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitSelfExpr(Expr.Self expr) {
-        if (currentFunction != FunctionType.METHOD) Flex.onErrorDetected(expr.keyword, "Cannot use 'self' outside of a method");
+        if (currentFunction != FunctionType.METHOD) Flex.onErrorDetected(expr.keyword, "Cannot use 'self' outside of a class");
 
         resolveLocal(expr, expr.keyword);
 

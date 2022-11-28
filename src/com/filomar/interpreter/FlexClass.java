@@ -15,12 +15,17 @@ public class FlexClass implements FlexCallable {
 
     @Override
     public int arity() {
+        FlexFunction init = findMethod("init");
+        if (init != null) return init.arity();
         return 0;
     }
 
     @Override
     public Object call(Interpreter interpreter, List<Object> arguments) {
-            return new FlexInstance(this);
+        FlexInstance instance = new FlexInstance(this);
+        FlexFunction init = findMethod("init");
+        if (init != null) init.bind(instance).call(interpreter, arguments);
+        return instance;
     }
 
     FlexFunction findMethod(String name) {
