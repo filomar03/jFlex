@@ -1,1 +1,3 @@
-usare un Environment all'interno delle funzioni
+implement static methods
+profile e speed up the whole interpreter
+test speed without debug specific code

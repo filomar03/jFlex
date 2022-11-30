@@ -12,10 +12,10 @@ JCFLAGS := -d $(OUT_DIR)/ -cp $(SRC_DIR)/
 .PHONY: program-run prompt-run generate-ast clean
 
 program-run: $(CLS)
-		java -cp $(OUT_DIR) com.filomar.interpreter.Flex scripts/main.flx
+		java -cp $(OUT_DIR) com.filomar.interpreter.Flex test/main.flx
 
 program-drun: $(CLS) #d stands for debug
-		java -cp $(OUT_DIR) com.filomar.interpreter.Flex scripts/main.flx 2>~/Desktop/flex_log.txt
+		java -cp $(OUT_DIR) com.filomar.interpreter.Flex test/main.flx 2>~/Desktop/flex_log.txt
 
 prompt-run: $(CLS)
 		java -cp $(OUT_DIR) com.filomar.interpreter.Flex 

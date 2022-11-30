@@ -12,9 +12,15 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         METHOD
     }
 
+    private enum ClassType {
+        NONE,
+        CLASS
+    }
+
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
+    private ClassType currentClass = ClassType.NONE;
     private int loopDepth = 0;
 
     Resolver(Interpreter interpreter) {
@@ -144,7 +150,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitSelfExpr(Expr.Self expr) {
-        if (currentFunction != FunctionType.METHOD) Flex.onErrorDetected(expr.keyword, "Cannot use 'self' outside of a class");
+        if (currentClass == ClassType.NONE) Flex.onErrorDetected(expr.keyword, "Cannot use 'self' outside of a class");
 
         resolveLocal(expr, expr.keyword);
 
@@ -154,17 +160,20 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     // Visitor pattern implementations (Stmt)
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
+        ClassType enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
+
         declare(stmt.identifier);
         define(stmt.identifier);
 
         beginScope();
         scopes.peek().put("self", true);
-
         for (Stmt.Function method : stmt.methods) {
             resolveFunction(method.function , FunctionType.METHOD);
         }
-
         exitScope();
+
+        currentClass = enclosingClass;
 
         return null;
     }

@@ -43,6 +43,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     // Interpret statements
     void interpret(List<Stmt> statements) {
+        environment.toString();
         try {
             for (Stmt stmt : statements) {
                 execute(stmt);
@@ -112,7 +113,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         if (isTruth(evaluate(stmt.condition)))
             execute(stmt.thenBranch);
         else if (stmt.elseBranch != null)
-            execute(stmt.thenBranch);
+            execute(stmt.elseBranch);
         return null;
     }
 
@@ -129,6 +130,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
+        System.out.println("");
         while (isTruth(evaluate(stmt.condition))) {
             try {
                 execute(stmt.body);
@@ -285,7 +287,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 return !isTruth(expression);
             }
             case MINUS -> {
-                checkNumericOperand(expr.operator, "Operand must be number", expr.expression);
+                checkNumericOperand(expr.operator, "Operand must be number", expression);
                 return -(double) expression;
             }
             default -> throw new IllegalArgumentException("Unexpected value: " + expr.operator.type());
@@ -346,7 +348,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitVariableExpr(Expr.Variable expr) {
         Integer distance = locals.get(expr);
         if (distance != null) {
-            return environment.getAt(expr.identifier.lexeme(), distance);
+            Object var = environment.getAt(expr.identifier.lexeme(), distance);
+            return var;
         } else {
             return globals.get(expr.identifier);
         }

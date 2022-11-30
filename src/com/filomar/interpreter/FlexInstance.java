@@ -28,6 +28,6 @@ public class FlexInstance {
 
     @Override
     public String toString() {
-        return "[instance " + klass + "]";
+        return "[instance " + klass + "]@" + hashCode();
     }
 }

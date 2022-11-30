@@ -1,0 +1,10 @@
+class Box {
+    setSize(x) {
+        fun setSize(box, x) { box.size = x; }
+        self.setSize = setSize;
+    }
+}
+
+var box = Box();
+box.setSize(box, 21);
+print box.size();

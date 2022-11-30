@@ -11,10 +11,9 @@
 
 package com.filomar.interpreter;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Iterator;
-import java.util.Arrays;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
@@ -74,6 +73,42 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
                     throw new IllegalArgumentException("Unexpected value: " + r.toString());
                 }).toList());
     }
+
+    public String stringify(Environment environment) {
+        return AstStringFormatter.formatCompoundNode("Environment",
+                Arrays.asList(
+                        "parent",
+                        "bindings"
+                ),
+                Arrays.asList(
+                        environment.getParent() != null ? stringify(environment.getParent()) : "null",
+                        stringify(environment.getBindings())
+                )
+        );
+    }
+
+    public String stringify(Map<String, Object> map) {
+        String mapStr = map.toString().replace("}", ",");
+
+        Pattern keysRegex = Pattern.compile("\\w+(?==)");
+        Pattern valuesRegex = Pattern.compile("=[^,=]*,");
+
+        Matcher matcher = keysRegex.matcher(mapStr);
+        List<String> keys = new ArrayList<>();
+        while (matcher.find()) {
+            keys.add(mapStr.substring(matcher.start(), matcher.end()));
+        }
+
+        matcher = valuesRegex.matcher(mapStr);
+        List<String> values = new ArrayList<>();
+        while (matcher.find()) {
+            values.add(mapStr.substring(matcher.start(), matcher.end()).replace(
+                    "=", "").replace(",", ""));
+        }
+
+        return AstStringFormatter.formatCompoundNode("Map", keys, values);
+    }
+
 
     // Visitor pattern implementations (Expr)
     // --Base cases

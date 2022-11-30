@@ -55,4 +55,17 @@ public class Environment {
         assert getAncestor(distance).bindings.containsKey(name); // Debug purpose only
         getAncestor(distance).bindings.put(name, value);
     }
+
+    public Environment getParent() { // Debug purpose only
+        return this.parent; // Debug purpose only
+    } // Debug purpose only
+
+    public Map<String, Object> getBindings() { // Debug purpose only
+        return this.bindings; // Debug purpose only
+    } // Debug purpose only
+
+    @Override
+    public String toString() {
+        return Flex.getAstPrinter().stringify(this);
+    }
 }
