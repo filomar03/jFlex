@@ -43,7 +43,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     // Interpret statements
     void interpret(List<Stmt> statements) {
-        environment.toString();
         try {
             for (Stmt stmt : statements) {
                 execute(stmt);
