@@ -9,7 +9,7 @@ JC := javac
 JCFLAGS := -d $(OUT_DIR)/ -cp $(SRC_DIR)/
 
 .SUFFIXES: .java
-.PHONY: interpreter-generate generate-ast clean
+.PHONY: interpreter-generate ast-generate clear
 
 interpreter-generate: $(CLS)
 

@@ -5,14 +5,6 @@ import java.util.Scanner;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private static class BreakEx extends RuntimeException {}
-    private static class ReturnEx extends RuntimeException {
-        final Object value;
-
-        ReturnEx(Object value) {
-            super(null, null, false, false);
-            this.value = value;
-        }
-    }
 
     private final Environment globals = new Environment();
     private Environment environment = globals;
@@ -75,7 +67,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Void visitClassStmt(Stmt.Class stmt) {
         Map<String, FlexFunction> methods = new HashMap<>();
         for (Stmt.Function function : stmt.methods) {
-            FlexFunction method = new FlexFunction(function.identifier.lexeme(), function.function, environment);
+            FlexFunction method = new FlexFunction(
+                    function.identifier.lexeme(),
+                    function.function, environment,
+                    function.identifier.lexeme().equals("init")
+            );
             methods.put(function.identifier.lexeme(), method);
         }
         FlexClass klass = new FlexClass(stmt.identifier.lexeme(), methods);
@@ -85,7 +81,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
-        FlexFunction function = new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment);
+        FlexFunction function = new FlexFunction(stmt.identifier.lexeme(), stmt.function, environment, false);
         environment.create(stmt.identifier.lexeme(), function);
         return null;
     }
@@ -125,7 +121,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {
-        throw new ReturnEx(stmt.expression != null ? evaluate(stmt.expression) : null);
+        throw new Return(stmt.expression != null ? evaluate(stmt.expression) : null);
     }
 
     @Override
@@ -308,11 +304,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             throw new RuntimeError(expr.paren, "Expected " + callable.arity() + " argument/s, found " + args.size());
         }
 
-        try {
-            return callable.call(this, args);
-        } catch (ReturnEx ex) {
-            return ex.value;
-        }
+        return callable.call(this, args);
     }
 
     @Override
@@ -328,7 +320,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitFunctionExpr(Expr.Function expr) {
-        return new FlexFunction("[anonym fun]", expr, environment);
+        return new FlexFunction("[anonym fun]", expr, environment, false);
     }
 
     @Override

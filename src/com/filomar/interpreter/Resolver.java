@@ -236,11 +236,14 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             Flex.onErrorDetected(stmt.keyword, "Cannot return outside functions or methods");
         }
 
-        if (currentFunction == FunctionType.INITIALIZER) {
-            Flex.onErrorDetected(stmt.keyword, "Cannot return from class initializer");
+        if (stmt.expression != null) {
+            if (currentFunction == FunctionType.INITIALIZER) {
+                Flex.onErrorDetected(stmt.keyword, "Cannot return from class initializer");
+            }
+
+            resolve(stmt.expression);
         }
 
-        if (stmt.expression != null) resolve(stmt.expression);
         return null;
     }
 

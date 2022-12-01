@@ -6,11 +6,13 @@ public class FlexFunction implements FlexCallable {
     private final String name;
     private final Expr.Function declaration;
     private final Environment closure;
+    private final boolean isInitializer;
 
-    FlexFunction(String name, Expr.Function declaration, Environment closure) {
+    FlexFunction(String name, Expr.Function declaration, Environment closure, boolean isInitializer) {
         this.name = name;
         this.declaration = declaration;
         this.closure = closure;
+        this.isInitializer = isInitializer;
     }
 
     // FlexCallable interface implementation
@@ -25,14 +27,20 @@ public class FlexFunction implements FlexCallable {
         for (int i = 0; i < declaration.parameters.size(); i++) {
             environment.create(declaration.parameters.get(i).lexeme(), arguments.get(i));
         }
-        interpreter.executeBlock(declaration.body, environment);
+        try {
+            interpreter.executeBlock(declaration.body, environment);
+        } catch (Return returnEx) {
+            if (isInitializer) return closure.getAt("self", 0);
+            return returnEx.value;
+        }
+        if (isInitializer) return closure.getAt("self", 0);
         return null;
     }
 
     FlexFunction bind(FlexInstance instance) {
         Environment instanceReference = new Environment(closure);
         instanceReference.create("self", instance);
-        return new FlexFunction(name, declaration, instanceReference);
+        return new FlexFunction(name, declaration, instanceReference, isInitializer);
     }
 
     @Override
