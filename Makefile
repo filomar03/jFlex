@@ -9,13 +9,16 @@ JC := javac
 JCFLAGS := -d $(OUT_DIR)/ -cp $(SRC_DIR)/
 
 .SUFFIXES: .java
-.PHONY: interpreter-generate generate-ast clean
+.PHONY: interpreter-generate entry-generate generate-ast clean
 
 interpreter-generate: $(CLS)
 
 
 $(CLS): $(OUT_DIR)/%.class: $(SRC_DIR)/%.java
 		@$(JC) $(JCFLAGS) $<
+
+entry-generate:
+		echo java -cp $(OUT_DIR) com.filomar.interpreter.Flex >> jflex
 
 ast-generate:
 		@$(JC) $(JCFLAGS) src/com/filomar/tool/GenerateAst.java
