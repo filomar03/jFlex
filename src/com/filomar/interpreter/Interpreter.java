@@ -74,11 +74,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
         Map<String, FlexFunction> methods = new HashMap<>();
+        FlexFunction init = stmt.init != null ? new FlexFunction(stmt.init.identifier.lexeme(), stmt.init.function, environment) : null;
         for (Stmt.Function function : stmt.methods) {
             FlexFunction method = new FlexFunction(function.identifier.lexeme(), function.function, environment);
             methods.put(function.identifier.lexeme(), method);
         }
-        FlexClass klass = new FlexClass(stmt.identifier.lexeme(), methods);
+        FlexClass klass = new FlexClass(stmt.identifier.lexeme(), init, methods);
         environment.create(stmt.identifier.lexeme(), klass);
         return null;
     }

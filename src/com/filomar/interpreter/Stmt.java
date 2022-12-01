@@ -20,10 +20,12 @@ abstract class Stmt {
 
 	static class Class extends Stmt {
 		final Token identifier;
+		final Stmt.Function init;
 		final List<Stmt.Function> methods;
 
-		Class(Token identifier, List<Stmt.Function> methods) {
+		Class(Token identifier, Stmt.Function init, List<Stmt.Function> methods) {
 			this.identifier = identifier;
+			this.init = init;
 			this.methods = methods;
 		}
 

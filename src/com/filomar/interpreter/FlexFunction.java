@@ -29,6 +29,7 @@ public class FlexFunction implements FlexCallable {
         return null;
     }
 
+    // Bind 'self' reference to the enclosing env of a function
     FlexFunction bind(FlexInstance instance) {
         Environment instanceReference = new Environment(closure);
         instanceReference.create("self", instance);

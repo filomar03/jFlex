@@ -6,16 +6,16 @@ import java.util.Map;
 public class FlexClass implements FlexCallable {
     private final String name;
     private final Map<String, FlexFunction> methods;
+    private final FlexFunction init;
 
-
-    FlexClass(String name, Map<String, FlexFunction> methods) {
+    FlexClass(String name, FlexFunction init, Map<String, FlexFunction> methods) {
         this.name = name;
+        this.init = init;
         this.methods = methods;
     }
 
     @Override
     public int arity() {
-        FlexFunction init = findMethod("init");
         if (init != null) return init.arity();
         return 0;
     }
@@ -23,7 +23,6 @@ public class FlexClass implements FlexCallable {
     @Override
     public Object call(Interpreter interpreter, List<Object> arguments) {
         FlexInstance instance = new FlexInstance(this);
-        FlexFunction init = findMethod("init");
         if (init != null) init.bind(instance).call(interpreter, arguments);
         return instance;
     }

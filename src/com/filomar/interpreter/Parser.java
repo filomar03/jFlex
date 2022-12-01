@@ -45,14 +45,16 @@ public class Parser {
         Token identifier = consume(IDENTIFIER, "Expected a valid class name");
         consume(LEFT_BRACE, "Expected '('");
 
+        Stmt.Function init = null;
         List<Stmt.Function> methods = new ArrayList<>();
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
             Token name = consume(IDENTIFIER, "Expected a valid method name");
-            methods.add(new Stmt.Function(name, functionDefinition()));
+            if (name.lexeme().equals("init")) init = new Stmt.Function(name, functionDefinition());
+            else methods.add(new Stmt.Function(name, functionDefinition()));
         }
 
         consume(RIGHT_BRACE, "Expected '}'");
-        return new Stmt.Class(identifier, methods);
+        return new Stmt.Class(identifier, init, methods);
     }
 
     private Stmt functionStmt() {

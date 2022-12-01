@@ -29,7 +29,7 @@ public class GenerateAst {
                 ));
         defineAst(args[0], packageName, "Stmt", Arrays.asList(
                 // low-priority statements (aka: declarations)
-                "Class      : Token identifier, List<Stmt.Function> methods",
+                "Class      : Token identifier, Stmt.Function init, List<Stmt.Function> methods",
                 "Function   : Token identifier, Expr.Function function",
                 "Variable   : Token identifier, Expr initializer",
                 // high-priority statements (aka: statements)
