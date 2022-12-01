@@ -9,6 +9,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         final Object value;
 
         ReturnEx(Object value) {
+            super(null, null, false, false);
             this.value = value;
         }
     }
@@ -129,13 +130,10 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
-        System.out.println("");
         while (isTruth(evaluate(stmt.condition))) {
             try {
                 execute(stmt.body);
-            } catch (BreakEx ex) {
-                return null;
-            }
+            } catch (BreakEx ignored) {}
         }
         return null;
     }
@@ -192,7 +190,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (isTruth(left))
                     return left;
             }
-            default -> {}
+            default -> throw new IllegalArgumentException("Unexpected value: " + expr.operator.type());
         }
 
         return evaluate(expr.right);
@@ -205,19 +203,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
         switch (expr.operator.type()) {
             case SLASH -> {
-                checkNumericOperand(expr.operator, "All operands must be numbers", left, right);
+                checkNumericOperands(expr.operator, "All operands must be numbers", left, right);
                 return (double) left / (double) right;
             }
             case STAR -> {
-                checkNumericOperand(expr.operator, "All operands must be numbers", left, right);
+                checkNumericOperands(expr.operator, "All operands must be numbers", left, right);
                 return (double) left * (double) right;
             }
             case MODULUS -> {
-                checkNumericOperand(expr.operator, "All operands must be numbers", left, right);
+                checkNumericOperands(expr.operator, "All operands must be numbers", left, right);
                 return (double) left % (double) right;
             }
             case MINUS -> {
-                checkNumericOperand(expr.operator, "All operands must be numbers", left, right);
+                checkNumericOperands(expr.operator, "All operands must be numbers", left, right);
                 return (double) left - (double) right;
             }
             case PLUS -> {
@@ -234,7 +232,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String b)
                     right = b.length();
 
-                checkNumericOperand(expr.operator, "Operands must be numbers or strings", left, right);
+                checkNumericOperands(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left > (double) right;
             }
             case GREATER_EQUAL -> {
@@ -244,7 +242,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String b)
                     right = b.length();
 
-                checkNumericOperand(expr.operator, "Operands must be numbers or strings", left, right);
+                checkNumericOperands(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left >= (double) right;
             }
             case LESS -> {
@@ -254,7 +252,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String b)
                     right = b.length();
 
-                checkNumericOperand(expr.operator, "Operands must be numbers or strings", left, right);
+                checkNumericOperands(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left < (double) right;
             }
             case LESS_EQUAL -> {
@@ -264,7 +262,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (right instanceof String b)
                     right = b.length();
 
-                checkNumericOperand(expr.operator, "Operands must be numbers or strings", left, right);
+                checkNumericOperands(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left <= (double) right;
             }
             case BANG_EQUAL -> {
@@ -330,7 +328,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitFunctionExpr(Expr.Function expr) {
-        return new FlexFunction("(anonym fun)", expr, environment);
+        return new FlexFunction("[anonym fun]", expr, environment);
     }
 
     @Override
@@ -347,8 +345,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitVariableExpr(Expr.Variable expr) {
         Integer distance = locals.get(expr);
         if (distance != null) {
-            Object var = environment.getAt(expr.identifier.lexeme(), distance);
-            return var;
+            return environment.getAt(expr.identifier.lexeme(), distance);
         } else {
             return globals.get(expr.identifier);
         }
@@ -375,10 +372,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return a.equals(b);
     }
 
-    private void checkNumericOperand(Token operator, String message, Object ... operands) {
-        for (Object operand : operands) {
-            if (!(operand instanceof Double)) throw new RuntimeError(operator, message);
-        }
+    private void checkNumericOperand(Token operator, String message, Object a) {
+        if (!(a instanceof Double)) throw new RuntimeError(operator, message);
+    }
+
+    private void checkNumericOperands(Token operator, String message, Object a, Object b) {
+        if (!(a instanceof Double && b instanceof Double)) throw new RuntimeError(operator, message);
     }
 
     private String stringify(Object obj) {

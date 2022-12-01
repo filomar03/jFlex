@@ -1,3 +1,4 @@
 implement static methods
 write a bunch of test to profile the interpreter and compare to jlox
 refine e speed up code
+remove implicit String.length() when comparing

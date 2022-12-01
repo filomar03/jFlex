@@ -9,25 +9,21 @@ JC := javac
 JCFLAGS := -d $(OUT_DIR)/ -cp $(SRC_DIR)/
 
 .SUFFIXES: .java
-.PHONY: program-run prompt-run generate-ast clean
+.PHONY: interpreter-generate entry-generate generate-ast clean
 
-program-run: $(CLS)
-		java -cp $(OUT_DIR) com.filomar.interpreter.Flex test/main.flx
-
-program-drun: $(CLS) #d stands for debug
-		java -cp $(OUT_DIR) com.filomar.interpreter.Flex test/main.flx 2>~/Desktop/flex_log.txt
-
-prompt-run: $(CLS)
-		java -cp $(OUT_DIR) com.filomar.interpreter.Flex 
+interpreter-generate: $(CLS)
 
 
 $(CLS): $(OUT_DIR)/%.class: $(SRC_DIR)/%.java
 		@$(JC) $(JCFLAGS) $<
 
-generate-ast: 
+entry-generate:
+		echo java -cp $(OUT_DIR) com.filomar.interpreter.Flex >> jflex
+
+ast-generate:
 		@$(JC) $(JCFLAGS) src/com/filomar/tool/GenerateAst.java
 		@java -cp $(OUT_DIR) com.filomar.tool.GenerateAst src/com/filomar/interpreter/ 
 
-clean:
+clear:
 		@rm $(OUT_DIR)/$(PACKAGE)/*.class
 		@rm $(OUT_DIR)/com/filomar/tool/GenerateAst.class
