@@ -9,7 +9,8 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private enum FunctionType {
         NONE,
         FUNCTION,
-        METHOD
+        METHOD,
+        INITIALIZER
     }
 
     private enum ClassType {
@@ -169,7 +170,10 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         beginScope();
         scopes.peek().put("self", true);
         for (Stmt.Function method : stmt.methods) {
-            resolveFunction(method.function , FunctionType.METHOD);
+            if (method.identifier.lexeme().equals("init"))
+                resolveFunction(method.function, FunctionType.INITIALIZER);
+            else
+                resolveFunction(method.function , FunctionType.METHOD);
         }
         exitScope();
 
@@ -230,6 +234,10 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitReturnStmt(Stmt.Return stmt) {
         if (currentFunction == FunctionType.NONE) {
             Flex.onErrorDetected(stmt.keyword, "Cannot return outside functions or methods");
+        }
+
+        if (currentFunction == FunctionType.INITIALIZER) {
+            Flex.onErrorDetected(stmt.keyword, "Cannot return from class initializer");
         }
 
         if (stmt.expression != null) resolve(stmt.expression);
