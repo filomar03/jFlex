@@ -1,10 +1,12 @@
 package com.filomar.interpreter;
 
-import java.util.*;
-import java.util.Scanner;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
-    private static class BreakEx extends RuntimeException {}
+    private static class Break extends RuntimeException {}
 
     private final Environment globals = new Environment();
     private Environment environment = globals;
@@ -101,7 +103,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitBreakStmt(Stmt.Break stmt) {
-        throw new BreakEx();
+        throw new Break();
     }
 
     @Override
@@ -129,7 +131,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         while (isTruth(evaluate(stmt.condition))) {
             try {
                 execute(stmt.body);
-            } catch (BreakEx ignored) {}
+            } catch (Break breakEx) {
+                break;
+            }
         }
         return null;
     }
@@ -320,7 +324,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitFunctionExpr(Expr.Function expr) {
-        return new FlexFunction("[anonym fun]", expr, environment, false);
+        return new FlexFunction("[anon fun]", expr, environment, false);
     }
 
     @Override

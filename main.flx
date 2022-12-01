@@ -1,5 +1,7 @@
-var start = clock();
-for (var i = 0; i < 1000000; i = i + 1) {
-    12 + 443;
+var i = 0;
+while (i < 12) {
+    print i;
+    if (i == 10)
+        break;
+    i = i + 1;
 }
-print clock() - start;
