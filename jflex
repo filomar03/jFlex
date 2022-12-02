@@ -1,2 +1,2 @@
-java -cp out/production/jFlex com.filomar.interpreter.Flex $@
-# add -ea to enable assertions
+#!/bin/bash
+java -cp . com.filomar.interpreter.Flex $@
