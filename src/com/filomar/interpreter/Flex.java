@@ -52,20 +52,20 @@ public class Flex {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
-        System.err.println("[DEBUG] printing scanned tokens...\n"); // Debug purpose only
-        tokens.forEach(System.err::println); // Debug purpose only
-        System.err.println("\n" + "-".repeat(100)); // Debug purpose only
+        /*System.err.println("[DEBUG] printing scanned tokens...\n"); // Debug purpose only
+        tokens.forEach(System.err::println);
+        System.err.println("\n" + "-".repeat(100));*/
 
         Parser parser = new Parser(tokens);
         List<Stmt> statements = parser.parse();
 
-        System.err.println("\n\n[DEBUG] printing parsed statements..."); // Debug purpose only
-        statements.forEach(x -> { // Debug purpose only
-            if (x != null) // Debug purpose only
-                System.err.println("\n" + getAstPrinter().stringify(x)); // Debug purpose only
-        }); // Debug purpose only
-        System.err.println("\n" + "-".repeat(100)); // Debug purpose only
-        System.err.println("\n\n"); // Debug purpose only
+        /*System.err.println("\n\n[DEBUG] printing parsed statements..."); // Debug purpose only
+        statements.forEach(x -> {
+            if (x != null)
+                System.err.println("\n" + getAstPrinter().stringify(x));
+        });
+        System.err.println("\n" + "-".repeat(100));
+        System.err.println("\n\n");*/
 
         if (hadError) return;
 
@@ -97,7 +97,7 @@ public class Flex {
         System.err.println("[" + line + ":" + column + "] " + (runtime ? "RUNTIME-ERROR" : "STATIC-ERROR") + ": " + message);
     }
 
-    // Instantiate AstFormatter
-    public static AstPrinter astPrinter = new AstPrinter(); // Debug purpose only
-    public static AstPrinter getAstPrinter() { return astPrinter; } // Debug purpose only
+
+    /*public static AstPrinter astPrinter = new AstPrinter(); // Debug purpose only
+    public static AstPrinter getAstPrinter() { return astPrinter; }*/ // Debug purpose only
 }

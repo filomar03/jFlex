@@ -25,11 +25,12 @@ public class GenerateAst {
                 "Grouping : Expr expression",
                 "Literal  : Object value",
                 "Self     : Token keyword",
+                "Super    : Token keyword, Token method",
                 "Variable : Token identifier"
                 ));
         defineAst(args[0], packageName, "Stmt", Arrays.asList(
                 // low-priority statements (aka: declarations)
-                "Class      : Token identifier, List<Stmt.Function> methods",
+                "Class      : Token identifier, Expr.Variable superClass, List<Stmt.Function> methods",
                 "Function   : Token identifier, Expr.Function function",
                 "Variable   : Token identifier, Expr initializer",
                 // high-priority statements (aka: statements)
@@ -99,10 +100,10 @@ public class GenerateAst {
         writer.println("\t\t}\n");
 
         // See AstPrinter.class
-        writer.println("\t\t@Override"); // Debug purpose only
+        /*writer.println("\t\t@Override"); // Debug purpose only
         writer.println("\t\tpublic String toString() {"); // Debug purpose only
         writer.println("\t\t\treturn Flex.getAstPrinter().stringify(this);"); // Debug purpose only
-        writer.println("\t\t}"); // Debug purpose only
+        writer.println("\t\t}");*/ // Debug purpose only
 
         writer.println("\t}\n"); 
     }

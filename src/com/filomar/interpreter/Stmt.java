@@ -20,10 +20,12 @@ abstract class Stmt {
 
 	static class Class extends Stmt {
 		final Token identifier;
+		final Expr.Variable superClass;
 		final List<Stmt.Function> methods;
 
-		Class(Token identifier, List<Stmt.Function> methods) {
+		Class(Token identifier, Expr.Variable superClass, List<Stmt.Function> methods) {
 			this.identifier = identifier;
+			this.superClass = superClass;
 			this.methods = methods;
 		}
 
@@ -32,10 +34,6 @@ abstract class Stmt {
 			return visitor.visitClassStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Function extends Stmt {
@@ -52,10 +50,6 @@ abstract class Stmt {
 			return visitor.visitFunctionStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Variable extends Stmt {
@@ -72,10 +66,6 @@ abstract class Stmt {
 			return visitor.visitVariableStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Block extends Stmt {
@@ -90,10 +80,6 @@ abstract class Stmt {
 			return visitor.visitBlockStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Break extends Stmt {
@@ -108,10 +94,6 @@ abstract class Stmt {
 			return visitor.visitBreakStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class If extends Stmt {
@@ -130,10 +112,6 @@ abstract class Stmt {
 			return visitor.visitIfStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Print extends Stmt {
@@ -148,10 +126,6 @@ abstract class Stmt {
 			return visitor.visitPrintStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Return extends Stmt {
@@ -168,10 +142,6 @@ abstract class Stmt {
 			return visitor.visitReturnStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class While extends Stmt {
@@ -188,10 +158,6 @@ abstract class Stmt {
 			return visitor.visitWhileStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Expression extends Stmt {
@@ -206,10 +172,6 @@ abstract class Stmt {
 			return visitor.visitExpressionStmt(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 }

@@ -4,23 +4,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Environment {
-    private final Environment parent;
+    final Environment closure;
     private final Map<String, Object> bindings = new HashMap<>();
 
     Environment() {
-        parent = null;
+        closure = null;
     }
 
     Environment(Environment enclosure) {
-        this.parent = enclosure;
+        this.closure = enclosure;
     }
 
     // Traverse environments
-    Environment getAncestor(int distance) {
+    private Environment getAncestor(int distance) {
         Environment environment = this;
         for (int i = 0; i < distance; i++) {
-            assert environment != null; // Debug purpose only
-            environment = environment.parent;
+            //assert environment != null; // Debug purpose only
+            environment = environment.closure;
         }
         return environment;
     }
@@ -38,7 +38,7 @@ public class Environment {
     }
 
     Object getAt(String name, int distance) {
-        assert getAncestor(distance).bindings.containsKey(name); // Debug purpose only
+        //assert getAncestor(distance).bindings.containsKey(name); // Debug purpose only
         return getAncestor(distance).bindings.get(name);
     }
 
@@ -52,20 +52,17 @@ public class Environment {
     }
 
     void assignAt(String name, Object value, int distance) {
-        assert getAncestor(distance).bindings.containsKey(name); // Debug purpose only
+        //assert getAncestor(distance).bindings.containsKey(name); // Debug purpose only
         getAncestor(distance).bindings.put(name, value);
     }
 
-    public Environment getParent() { // Debug purpose only
-        return this.parent; // Debug purpose only
-    } // Debug purpose only
 
-    public Map<String, Object> getBindings() { // Debug purpose only
-        return this.bindings; // Debug purpose only
-    } // Debug purpose only
+    /*public Map<String, Object> getBindings() { // Debug purpose only
+        return this.bindings;
+    }*/
 
-    @Override
-    public String toString() {
+    /*@Override
+    public String toString() { // Debug purpose only
         return Flex.getAstPrinter().stringify(this);
-    }
+    }*/
 }

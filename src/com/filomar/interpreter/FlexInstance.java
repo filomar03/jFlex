@@ -11,6 +11,7 @@ public class FlexInstance {
         this.klass = klass;
     }
 
+    // Manage instance properties e fields
     Object get(Token property) {
         if (fields.containsKey(property.lexeme())) return fields.get(property.lexeme());
 
@@ -24,8 +25,9 @@ public class FlexInstance {
         fields.put(field.lexeme(), value);
     }
 
+
     @Override
     public String toString() {
-        return "[instance " + klass + "]@" + hashCode();
+        return "[instance " + klass.name + "]";
     }
 }

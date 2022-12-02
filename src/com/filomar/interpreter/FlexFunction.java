@@ -27,21 +27,25 @@ public class FlexFunction implements FlexCallable {
         for (int i = 0; i < declaration.parameters.size(); i++) {
             environment.create(declaration.parameters.get(i).lexeme(), arguments.get(i));
         }
+
         try {
             interpreter.executeBlock(declaration.body, environment);
         } catch (Return returnEx) {
             if (isInitializer) return closure.getAt("self", 0);
             return returnEx.value;
         }
+
         if (isInitializer) return closure.getAt("self", 0);
         return null;
     }
 
+    // Bind instance reference into function environments chain
     FlexFunction bind(FlexInstance instance) {
         Environment instanceReference = new Environment(closure);
         instanceReference.create("self", instance);
         return new FlexFunction(name, declaration, instanceReference, isInitializer);
     }
+
 
     @Override
     public String toString() {

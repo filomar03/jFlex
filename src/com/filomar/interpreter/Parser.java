@@ -43,7 +43,13 @@ public class Parser {
 
     private Stmt classStmt() {
         Token identifier = consume(IDENTIFIER, "Expected a valid class name");
-        consume(LEFT_BRACE, "Expected '('");
+
+        Expr.Variable superClass = null;
+        if (match(LESS)) {
+            superClass = new Expr.Variable(consume(IDENTIFIER, "Expected superclass name"));
+        }
+
+        consume(LEFT_BRACE, "Expected '{'");
 
         List<Stmt.Function> methods = new ArrayList<>();
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
@@ -52,7 +58,8 @@ public class Parser {
         }
 
         consume(RIGHT_BRACE, "Expected '}'");
-        return new Stmt.Class(identifier, methods);
+
+        return new Stmt.Class(identifier, superClass, methods);
     }
 
     private Stmt functionStmt() {
@@ -69,6 +76,7 @@ public class Parser {
         }
 
         consume(SEMICOLON, "Expected ';'");
+
         return new Stmt.Variable(identifier, initializer);
     }
 
@@ -354,6 +362,11 @@ public class Parser {
         if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal());
         if (match(TRUE)) return new Expr.Literal(true);
         if (match(SELF)) return new Expr.Self(previous());
+        if (match(SUPER)) {
+            Token keyword = previous();
+            consume(DOT, "Expected '.' after 'super'");
+            return new Expr.Super(keyword, consume(IDENTIFIER, "Expected superclass method name"));
+        }
         if (match(IDENTIFIER)) return new Expr.Variable(previous());
 
         throw error(current(), "Expected a primary expression (lambda function, grouping, literal, identifier)");

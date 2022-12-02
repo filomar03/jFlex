@@ -1,7 +1,21 @@
-var i = 0;
-while (i < 12) {
-    print i;
-    if (i == 10)
-        break;
-    i = i + 1;
+class A {
+    printName() {
+        print A;
+    }
 }
+
+class B < B {
+    printName() {
+        super.printName();
+        print B;
+    }
+}
+
+class C {
+    printName() {
+        super.printName();
+        print C;
+    }
+}
+
+C().printName();

@@ -15,6 +15,7 @@ abstract class Expr {
 		R visitGroupingExpr(Grouping expr);
 		R visitLiteralExpr(Literal expr);
 		R visitSelfExpr(Self expr);
+		R visitSuperExpr(Super expr);
 		R visitVariableExpr(Variable expr);
 	}
 
@@ -34,10 +35,6 @@ abstract class Expr {
 			return visitor.visitAssignExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Set extends Expr {
@@ -56,10 +53,6 @@ abstract class Expr {
 			return visitor.visitSetExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Logical extends Expr {
@@ -78,10 +71,6 @@ abstract class Expr {
 			return visitor.visitLogicalExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Binary extends Expr {
@@ -100,10 +89,6 @@ abstract class Expr {
 			return visitor.visitBinaryExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Unary extends Expr {
@@ -120,10 +105,6 @@ abstract class Expr {
 			return visitor.visitUnaryExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Call extends Expr {
@@ -142,10 +123,6 @@ abstract class Expr {
 			return visitor.visitCallExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Get extends Expr {
@@ -162,10 +139,6 @@ abstract class Expr {
 			return visitor.visitGetExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Function extends Expr {
@@ -182,10 +155,6 @@ abstract class Expr {
 			return visitor.visitFunctionExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Grouping extends Expr {
@@ -200,10 +169,6 @@ abstract class Expr {
 			return visitor.visitGroupingExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Literal extends Expr {
@@ -218,10 +183,6 @@ abstract class Expr {
 			return visitor.visitLiteralExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 	static class Self extends Expr {
@@ -236,10 +197,22 @@ abstract class Expr {
 			return visitor.visitSelfExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
+	}
+
+	static class Super extends Expr {
+		final Token keyword;
+		final Token method;
+
+		Super(Token keyword, Token method) {
+			this.keyword = keyword;
+			this.method = method;
 		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitSuperExpr(this);
+		}
+
 	}
 
 	static class Variable extends Expr {
@@ -254,10 +227,6 @@ abstract class Expr {
 			return visitor.visitVariableExpr(this);
 		}
 
-		@Override
-		public String toString() {
-			return Flex.getAstPrinter().stringify(this);
-		}
 	}
 
 }

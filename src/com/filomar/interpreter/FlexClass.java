@@ -4,15 +4,17 @@ import java.util.List;
 import java.util.Map;
 
 public class FlexClass implements FlexCallable {
-    private final String name;
+    final String name;
+    private final FlexClass superClass;
     private final Map<String, FlexFunction> methods;
 
-
-    FlexClass(String name, Map<String, FlexFunction> methods) {
+    FlexClass(String name, FlexClass superClass, Map<String, FlexFunction> methods) {
         this.name = name;
+        this.superClass = superClass;
         this.methods = methods;
     }
 
+    // FlexCallable interface implementation
     @Override
     public int arity() {
         FlexFunction init = findMethod("init");
@@ -28,9 +30,19 @@ public class FlexClass implements FlexCallable {
         return instance;
     }
 
+    // Select class method
     FlexFunction findMethod(String name) {
-        return methods.get(name);
+        if (methods.containsKey(name)) {
+            return methods.get(name);
+        }
+
+        if (superClass != null) {
+            return superClass.findMethod(name);
+        }
+
+        return null;
     }
+
 
     @Override
     public String toString() {

@@ -9,6 +9,10 @@ fun fib(n) {
 //    print "fib(" + i + ") = " + n + " in " + (clock() - start) + " seconds";
 //}
 
-for (var i = 1; i <= 40; i = i + 1) {
-    var fibr = fib(i);
+var start = clock();
+
+for (var i = 1; i <= 35; i = i + 1) {
+    print fib(i);
 }
+
+print clock() - start;

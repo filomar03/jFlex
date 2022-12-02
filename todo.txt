@@ -1,4 +1,7 @@
-implement static methods
-write a bunch of test to profile the interpreter and compare to jlox
-refine e speed up code
-remove implicit String.length() when comparing
+write test for jflex
+refine, optimise and speed up code
+
+to implement:
+ - static methods
+ - implement mixins/extension methods
+ - implicitly call super class initializer ?

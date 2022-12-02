@@ -1,21 +1,22 @@
 package com.filomar.interpreter;
 
+import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private enum FunctionType {
         NONE,
         FUNCTION,
-        METHOD,
-        INITIALIZER
+        INITIALIZER,
+        METHOD
     }
 
     private enum ClassType {
         NONE,
-        CLASS
+        CLASS,
+        SUBCLASS
     }
 
     private final Interpreter interpreter;
@@ -140,6 +141,26 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitSelfExpr(Expr.Self expr) {
+        if (currentClass == ClassType.NONE) Flex.onErrorDetected(expr.keyword, "Cannot use 'self' outside of a class");
+
+        resolveLocal(expr, expr.keyword);
+        return null;
+    }
+
+    @Override
+    public Void visitSuperExpr(Expr.Super expr) {
+        if (currentClass == ClassType.NONE) {
+            Flex.onErrorDetected(expr.keyword, "Cannot use 'super' outside of classes");
+        } else if (currentClass != ClassType.SUBCLASS) {
+            Flex.onErrorDetected(expr.keyword, "Cannot use 'super' if class doesn't inherit from a superclass");
+        }
+
+        resolveLocal(expr, expr.keyword);
+        return null;
+    }
+
+    @Override
     public Void visitVariableExpr(Expr.Variable expr) {
         if (!scopes.isEmpty() && scopes.peek().get(expr.identifier.lexeme()) == Boolean.FALSE) {
             Flex.onErrorDetected(expr.identifier, "Variable cannot refer to itself in it's own initializer");
@@ -149,36 +170,42 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         return null;
     }
 
-    @Override
-    public Void visitSelfExpr(Expr.Self expr) {
-        if (currentClass == ClassType.NONE) Flex.onErrorDetected(expr.keyword, "Cannot use 'self' outside of a class");
-
-        resolveLocal(expr, expr.keyword);
-
-        return null;
-    }
-
     // Visitor pattern implementations (Stmt)
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
-        ClassType enclosingClass = currentClass;
         currentClass = ClassType.CLASS;
 
         declare(stmt.identifier);
         define(stmt.identifier);
 
+        if (stmt.superClass != null) {
+            if (stmt.identifier.lexeme().equals(stmt.superClass.identifier.lexeme())) {
+                Flex.onErrorDetected(stmt.superClass.identifier, "Class cannot inherit from itself");
+            }
+
+            currentClass = ClassType.SUBCLASS;
+
+            resolveLocal(stmt.superClass, stmt.superClass.identifier);
+
+            beginScope();
+            scopes.peek().put("super", true);
+        }
+
         beginScope();
         scopes.peek().put("self", true);
+
         for (Stmt.Function method : stmt.methods) {
             if (method.identifier.lexeme().equals("init"))
                 resolveFunction(method.function, FunctionType.INITIALIZER);
             else
                 resolveFunction(method.function , FunctionType.METHOD);
         }
+
         exitScope();
 
-        currentClass = enclosingClass;
+        if (stmt.superClass != null) exitScope();
 
+        currentClass = ClassType.NONE;
         return null;
     }
 
@@ -238,12 +265,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
         if (stmt.expression != null) {
             if (currentFunction == FunctionType.INITIALIZER) {
-                Flex.onErrorDetected(stmt.keyword, "Cannot return from class initializer");
+                Flex.onErrorDetected(stmt.keyword, "Cannot return a value from class initializer");
             }
 
             resolve(stmt.expression);
         }
-
         return null;
     }
 

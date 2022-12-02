@@ -67,17 +67,34 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     // Visitor pattern implementations (declarations)
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
+        Object superClass = null;
+        if (stmt.superClass != null) {
+            superClass = evaluate(stmt.superClass);
+            if (!(superClass instanceof FlexClass)) {
+                throw new RuntimeError(stmt.superClass.identifier, "Superclass must be a class");
+            }
+
+            environment = new Environment(environment);
+            environment.create("super", superClass);
+        }
+
         Map<String, FlexFunction> methods = new HashMap<>();
         for (Stmt.Function function : stmt.methods) {
             FlexFunction method = new FlexFunction(
                     function.identifier.lexeme(),
-                    function.function, environment,
+                    function.function,
+                    environment,
                     function.identifier.lexeme().equals("init")
             );
             methods.put(function.identifier.lexeme(), method);
         }
-        FlexClass klass = new FlexClass(stmt.identifier.lexeme(), methods);
-        environment.create(stmt.identifier.lexeme(), klass);
+
+        if (superClass != null) {
+            environment = environment.closure;
+        }
+
+        environment.create(stmt.identifier.lexeme(), new FlexClass(stmt.identifier.lexeme(), (FlexClass) superClass, methods));
+
         return null;
     }
 
@@ -97,7 +114,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     // Visitor pattern implementations (statements)
     @Override
     public Void visitBlockStmt(Stmt.Block block) {
-        executeBlock(block.statements, new Environment(this.environment));
+        executeBlock(block.statements, new Environment(environment));
         return null;
     }
 
@@ -226,42 +243,18 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 return stringify(left) + stringify(right);
             }
             case GREATER -> {
-                if (left instanceof String a)
-                    left = a.length();
-
-                if (right instanceof String b)
-                    right = b.length();
-
                 checkNumericOperands(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left > (double) right;
             }
             case GREATER_EQUAL -> {
-                if (left instanceof String a)
-                    left = a.length();
-
-                if (right instanceof String b)
-                    right = b.length();
-
                 checkNumericOperands(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left >= (double) right;
             }
             case LESS -> {
-                if (left instanceof String a)
-                    left = a.length();
-
-                if (right instanceof String b)
-                    right = b.length();
-
                 checkNumericOperands(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left < (double) right;
             }
             case LESS_EQUAL -> {
-                if (left instanceof String a)
-                    left = a.length();
-
-                if (right instanceof String b)
-                    right = b.length();
-
                 checkNumericOperands(expr.operator, "Operands must be numbers or strings", left, right);
                 return (double) left <= (double) right;
             }
@@ -318,7 +311,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         if (object instanceof FlexInstance instance) {
             return instance.get(expr.property);
         }
-        
+
         throw new RuntimeError(expr.property, "Cannot get property, object is not an instance");
     }
 
@@ -338,6 +331,24 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitSelfExpr(Expr.Self expr) {
+        //assert locals.get(expr) != null; // Debug purpose only
+        return environment.getAt("self", locals.get(expr));
+    }
+
+    @Override
+    public Object visitSuperExpr(Expr.Super expr) {
+        //assert locals.get(expr) != null; // Debug purpose only
+        int distance = locals.get(expr);
+        FlexClass superClass = (FlexClass) environment.getAt("super", distance);
+        FlexFunction method = superClass.findMethod(expr.method.lexeme());
+        if (method != null) {
+            return method.bind((FlexInstance) environment.getAt("self", distance - 1));
+        }
+        throw new RuntimeError(expr.method, "Method '" + expr.method.lexeme() + "' cannot be found in superclass");
+    }
+
+    @Override
     public Object visitVariableExpr(Expr.Variable expr) {
         Integer distance = locals.get(expr);
         if (distance != null) {
@@ -345,12 +356,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         } else {
             return globals.get(expr.identifier);
         }
-    }
-
-    @Override
-    public Object visitSelfExpr(Expr.Self expr) {
-        assert locals.get(expr) != null; // Debug purpose only
-        return environment.getAt("self", locals.get(expr));
     }
 
     // Utilities

@@ -1,7 +1,9 @@
 /*
     This class stringify AbstractSyntaxTree nodes expanding in a tree layout
 
-    Override toString() methods of all Expr.class and Stmt.class subclasses with the following to gather useful string when using the debugger.
+    Override toString() methods of all Expr.class and Stmt.class subclasses with the following
+    to have useful string when using the debugger.
+
     Example:
         @Override
         public String toString() {
@@ -77,12 +79,13 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     public String stringify(Environment environment) {
         return AstStringFormatter.formatCompoundNode("Environment",
                 Arrays.asList(
-                        "parent",
+                        "closure",
                         "bindings"
                 ),
                 Arrays.asList(
-                        environment.getParent() != null ? stringify(environment.getParent()) : "null",
-                        stringify(environment.getBindings())
+                        environment.closure != null ? stringify(environment.closure) : "null",
+                        "environment bindings are private, cannot access them"
+                        //stringify(environment.getBindings())
                 )
         );
     }
@@ -109,7 +112,6 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return AstStringFormatter.formatCompoundNode("Map", keys, values);
     }
 
-
     // Visitor pattern implementations (Expr)
     // --Base cases
     @Override
@@ -130,13 +132,13 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
-    public String visitVariableExpr(Expr.Variable expr) {
-        return "Expr.Variable: " + expr.identifier.lexeme();
+    public String visitSelfExpr(Expr.Self expr) {
+        return "Expr.Self";
     }
 
     @Override
-    public String visitSelfExpr(Expr.Self expr) {
-        return "Expr.Self";
+    public String visitVariableExpr(Expr.Variable expr) {
+        return "Expr.Variable: " + expr.identifier.lexeme();
     }
 
     // --Non base cases
@@ -153,7 +155,6 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
                 )
         );
     }
-
     @Override
     public String visitSetExpr(Expr.Set expr) {
         return AstStringFormatter.formatCompoundNode("Expr.Set",
@@ -245,6 +246,14 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitGroupingExpr(Expr.Grouping expr) {
+        return AstStringFormatter.formatCompoundNode("Expr.Grouping",
+                Collections.singletonList("expression"),
+                Collections.singletonList(stringify(expr.expression))
+        );
+    }
+
+    @Override
     public String visitFunctionExpr(Expr.Function expr) {
         return AstStringFormatter.formatCompoundNode("Expr.Function",
                 Arrays.asList(
@@ -259,14 +268,10 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
-    public String visitGroupingExpr(Expr.Grouping expr) {
-        return AstStringFormatter.formatCompoundNode("Expr.Grouping",
-                Collections.singletonList(
-                        "expression"
-                ),
-                Collections.singletonList(
-                        stringify(expr.expression)
-                )
+    public String visitSuperExpr(Expr.Super expr) {
+        return AstStringFormatter.formatCompoundNode("Expr.Super",
+                Collections.singletonList("method"),
+                Collections.singletonList(stringify(expr.method))
         );
     }
 
@@ -277,21 +282,18 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return "Stmt.Break";
     }
 
-    @Override
-    public String visitReturnStmt(Stmt.Return stmt) {
-        return "Stmt.Return" + (stmt.expression != null ?  stringify(stmt.expression) : "null");
-    }
-
     // --Non base cases
     @Override
     public String visitClassStmt(Stmt.Class stmt) {
         return AstStringFormatter.formatCompoundNode("Stmt.Class",
                 Arrays.asList(
                         "identifier",
+                        "super class",
                         "methods"
                 ),
                 Arrays.asList(
                         stringify(stmt.identifier),
+                        stmt.superClass != null ? stringify(stmt.superClass) : "null",
                         stringify(stmt.methods)
                 )
         );
@@ -328,12 +330,8 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitBlockStmt(Stmt.Block stmt) {
         return AstStringFormatter.formatCompoundNode("Stmt.Block",
-                Collections.singletonList(
-                        "statements"
-                ),
-                Collections.singletonList(
-                        stringify(stmt.statements)
-                )
+                Collections.singletonList("statements"),
+                Collections.singletonList(stringify(stmt.statements))
         );
     }
 
@@ -342,8 +340,8 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return AstStringFormatter.formatCompoundNode("Stmt.If",
                 Arrays.asList(
                         "condition",
-                        "thenBranch",
-                        "elseBranch"
+                        "then branch",
+                        "else branch"
                 ),
                 Arrays.asList(
                         stringify(stmt.condition),
@@ -356,12 +354,16 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitPrintStmt(Stmt.Print stmt) {
         return AstStringFormatter.formatCompoundNode("Stmt.Print",
-                Collections.singletonList(
-                        "expression"
-                ),
-                Collections.singletonList(
-                        stringify(stmt.expression)
-                )
+                Collections.singletonList("expression"),
+                Collections.singletonList(stringify(stmt.expression))
+        );
+    }
+
+    @Override
+    public String visitReturnStmt(Stmt.Return stmt) {
+        return AstStringFormatter.formatCompoundNode("Stmt.Return",
+                Collections.singletonList("value"),
+                Collections.singletonList(stmt.expression != null ? stringify(stmt.expression) : "null")
         );
     }
 
@@ -382,12 +384,8 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitExpressionStmt(Stmt.Expression stmt) {
         return AstStringFormatter.formatCompoundNode("Stmt.Expression",
-                Collections.singletonList(
-                        "expression"
-                ),
-                Collections.singletonList(
-                        stringify(stmt.expression)
-                )
+                Collections.singletonList("expression"),
+                Collections.singletonList(stringify(stmt.expression))
         );
     }
 }
